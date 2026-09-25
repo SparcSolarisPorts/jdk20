@@ -492,6 +492,14 @@
 #define NOT_S390(code) code
 #endif
 
+#ifdef SPARC
+#define SPARC_ONLY(code) code
+#define NOT_SPARC(code)
+#else
+#define SPARC_ONLY(code)
+#define NOT_SPARC(code) code
+#endif
+
 #if defined(PPC32) || defined(PPC64)
 #ifndef PPC
 #define PPC

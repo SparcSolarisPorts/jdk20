@@ -478,11 +478,11 @@ void LIRGenerator::array_range_check(LIR_Opr array, LIR_Opr index,
   if (index->is_constant()) {
     cmp_mem_int(lir_cond_belowEqual, array, arrayOopDesc::length_offset_in_bytes(),
                 index->as_jint(), null_check_info);
-    __ branch(lir_cond_belowEqual, stub); // forward branch
+    __ branch(lir_cond_belowEqual, T_INT, stub); // forward branch
   } else {
     cmp_reg_mem(lir_cond_aboveEqual, index, array,
                 arrayOopDesc::length_offset_in_bytes(), T_INT, null_check_info);
-    __ branch(lir_cond_aboveEqual, stub); // forward branch
+    __ branch(lir_cond_aboveEqual, T_INT, stub); // forward branch
   }
 }
 
@@ -654,7 +654,7 @@ void LIRGenerator::new_instance(LIR_Opr dst, ciInstanceKlass* klass, bool is_unr
                        oopDesc::header_size(), instance_size, klass_reg, !klass->is_initialized(), slow_path);
   } else {
     CodeStub* slow_path = new NewInstanceStub(klass_reg, dst, klass, info, Runtime1::new_instance_id);
-    __ branch(lir_cond_always, slow_path);
+    __ branch(lir_cond_always, T_ILLEGAL, slow_path);
     __ branch_destination(slow_path->continuation());
   }
 }
@@ -1299,27 +1299,20 @@ void LIRGenerator::do_getModifiers(Intrinsic* x) {
     info = state_for(x);
   }
 
-  // While reading off the universal constant mirror is less efficient than doing
-  // another branch and returning the constant answer, this branchless code runs into
-  // much less risk of confusion for C1 register allocator. The choice of the universe
-  // object here is correct as long as it returns the same modifiers we would expect
-  // from the primitive class itself. See spec for Class.getModifiers that provides
-  // the typed array klasses with similar modifiers as their component types.
+  LabelObj* L_not_prim = new LabelObj();
+  LabelObj* L_done = new LabelObj();
 
-  Klass* univ_klass_obj = Universe::byteArrayKlassObj();
-  assert(univ_klass_obj->modifier_flags() == (JVM_ACC_ABSTRACT | JVM_ACC_FINAL | JVM_ACC_PUBLIC), "Sanity");
-  LIR_Opr prim_klass = LIR_OprFact::metadataConst(univ_klass_obj);
-
-  LIR_Opr recv_klass = new_register(T_METADATA);
-  __ move(new LIR_Address(receiver.result(), java_lang_Class::klass_offset(), T_ADDRESS), recv_klass, info);
-
-  // Check if this is a Java mirror of primitive type, and select the appropriate klass.
   LIR_Opr klass = new_register(T_METADATA);
-  __ cmp(lir_cond_equal, recv_klass, LIR_OprFact::metadataConst(0));
-  __ cmove(lir_cond_equal, prim_klass, recv_klass, klass, T_ADDRESS);
+  // Checking if it's a java mirror of primitive type
+  __ move(new LIR_Address(receiver.result(), java_lang_Class::klass_offset(), T_ADDRESS), klass, info);
+  __ cmp(lir_cond_notEqual, klass, LIR_OprFact::metadataConst(0));
+  __ branch(lir_cond_notEqual, T_OBJECT, L_not_prim->label());
+  __ move(LIR_OprFact::intConst(JVM_ACC_ABSTRACT | JVM_ACC_FINAL | JVM_ACC_PUBLIC), result);
+  __ branch(lir_cond_always, T_OBJECT, L_done->label());
 
-  // Get the answer.
+  __ branch_destination(L_not_prim->label());
   __ move(new LIR_Address(klass, in_bytes(Klass::modifier_flags_offset()), T_INT), result);
+  __ branch_destination(L_done->label());
 }
 
 void LIRGenerator::do_getObjectSize(Intrinsic* x) {
@@ -1338,7 +1331,7 @@ void LIRGenerator::do_getObjectSize(Intrinsic* x) {
   LabelObj* L_array = new LabelObj();
 
   __ cmp(lir_cond_lessEqual, layout, 0);
-  __ branch(lir_cond_lessEqual, L_array->label());
+  __ branch(lir_cond_lessEqual, T_OBJECT, L_array->label());
 
   // Instance case: the layout helper gives us instance size almost directly,
   // but we need to mask out the _lh_instance_slow_path_bit.
@@ -1349,7 +1342,7 @@ void LIRGenerator::do_getObjectSize(Intrinsic* x) {
   __ logical_and(layout, mask, layout);
   __ convert(Bytecodes::_i2l, layout, result_reg);
 
-  __ branch(lir_cond_always, L_done->label());
+  __ branch(lir_cond_always, T_OBJECT, L_done->label());
 
   // Array case: size is round(header + element_size*arraylength).
   // Since arraylength is different for every array instance, we have to
@@ -1393,7 +1386,7 @@ void LIRGenerator::do_getObjectSize(Intrinsic* x) {
 
   __ branch_destination(L_shift_loop->label());
   __ cmp(lir_cond_equal, layout, 0);
-  __ branch(lir_cond_equal, L_shift_exit->label());
+  __ branch(lir_cond_equal, T_OBJECT, L_shift_exit->label());
 
 #ifdef _LP64
   __ shift_left(length, 1, length);
@@ -1403,7 +1396,7 @@ void LIRGenerator::do_getObjectSize(Intrinsic* x) {
 
   __ sub(layout, LIR_OprFact::intConst(1), layout);
 
-  __ branch(lir_cond_always, L_shift_loop->label());
+  __ branch(lir_cond_always, T_OBJECT, L_shift_loop->label());
   __ branch_destination(L_shift_exit->label());
 
   // Mix all up, round, and push to the result.
@@ -1717,7 +1710,7 @@ void LIRGenerator::do_StoreIndexed(StoreIndexed* x) {
   if (GenerateRangeChecks && needs_range_check) {
     if (use_length) {
       __ cmp(lir_cond_belowEqual, length.result(), index.result());
-      __ branch(lir_cond_belowEqual, new RangeCheckStub(range_check_info, index.result(), array.result()));
+      __ branch(lir_cond_belowEqual, T_INT, new RangeCheckStub(range_check_info, index.result(), array.result()));
     } else {
       array_range_check(array.result(), index.result(), null_check_info, range_check_info);
       // range_check also does the null check
@@ -1931,11 +1924,11 @@ void LIRGenerator::do_PreconditionsCheckIndex(Intrinsic* x, BasicType type) {
 #else
   // index >= 0
   __ cmp(lir_cond_less, index.result(), zero_reg);
-  __ branch(lir_cond_less, new DeoptimizeStub(info, Deoptimization::Reason_range_check,
+  __ branch(lir_cond_less, type, new DeoptimizeStub(info, Deoptimization::Reason_range_check,
                                                     Deoptimization::Action_make_not_entrant));
   // index < length
   __ cmp(lir_cond_greaterEqual, index.result(), len);
-  __ branch(lir_cond_greaterEqual, new DeoptimizeStub(info, Deoptimization::Reason_range_check,
+  __ branch(lir_cond_greaterEqual, type, new DeoptimizeStub(info, Deoptimization::Reason_range_check,
                                                             Deoptimization::Action_make_not_entrant));
 #endif
   __ move(index.result(), result);
@@ -2005,12 +1998,12 @@ void LIRGenerator::do_LoadIndexed(LoadIndexed* x) {
 
   if (GenerateRangeChecks && needs_range_check) {
     if (StressLoopInvariantCodeMotion && range_check_info->deoptimize_on_exception()) {
-      __ branch(lir_cond_always, new RangeCheckStub(range_check_info, index.result(), array.result()));
+      __ branch(lir_cond_always, T_ILLEGAL, new RangeCheckStub(range_check_info, index.result(), array.result()));
     } else if (use_length) {
       // TODO: use a (modified) version of array_range_check that does not require a
       //       constant length to be loaded to a register
       __ cmp(lir_cond_belowEqual, length.result(), index.result());
-      __ branch(lir_cond_belowEqual, new RangeCheckStub(range_check_info, index.result(), array.result()));
+      __ branch(lir_cond_belowEqual, T_INT, new RangeCheckStub(range_check_info, index.result(), array.result()));
     } else {
       array_range_check(array.result(), index.result(), null_check_info, range_check_info);
       // The range check performs the null check, so clear it out for the load
@@ -2221,18 +2214,18 @@ void LIRGenerator::do_SwitchRanges(SwitchRangeArray* x, LIR_Opr value, BlockBegi
     BlockBegin* dest = one_range->sux();
     if (low_key == high_key) {
       __ cmp(lir_cond_equal, value, low_key);
-      __ branch(lir_cond_equal, dest);
+      __ branch(lir_cond_equal, T_INT, dest);
     } else if (high_key - low_key == 1) {
       __ cmp(lir_cond_equal, value, low_key);
-      __ branch(lir_cond_equal, dest);
+      __ branch(lir_cond_equal, T_INT, dest);
       __ cmp(lir_cond_equal, value, high_key);
-      __ branch(lir_cond_equal, dest);
+      __ branch(lir_cond_equal, T_INT, dest);
     } else {
       LabelObj* L = new LabelObj();
       __ cmp(lir_cond_less, value, low_key);
-      __ branch(lir_cond_less, L->label());
+      __ branch(lir_cond_less, T_INT, L->label());
       __ cmp(lir_cond_lessEqual, value, high_key);
-      __ branch(lir_cond_lessEqual, dest);
+      __ branch(lir_cond_lessEqual, T_INT, dest);
       __ branch_destination(L->label());
     }
   }
@@ -2352,7 +2345,7 @@ void LIRGenerator::do_TableSwitch(TableSwitch* x) {
   } else {
     for (int i = 0; i < len; i++) {
       __ cmp(lir_cond_equal, value, i + lo_key);
-      __ branch(lir_cond_equal, x->sux_at(i));
+      __ branch(lir_cond_equal, T_INT, x->sux_at(i));
     }
     __ jump(x->default_sux());
   }
@@ -2411,7 +2404,7 @@ void LIRGenerator::do_LookupSwitch(LookupSwitch* x) {
     int len = x->length();
     for (int i = 0; i < len; i++) {
       __ cmp(lir_cond_equal, value, x->key_at(i));
-      __ branch(lir_cond_equal, x->sux_at(i));
+      __ branch(lir_cond_equal, T_INT, x->sux_at(i));
     }
     __ jump(x->default_sux());
   }
@@ -3291,9 +3284,9 @@ void LIRGenerator::increment_event_counter_impl(CodeEmitInfo* info,
     if (freq == 0) {
       if (!step->is_constant()) {
         __ cmp(lir_cond_notEqual, step, LIR_OprFact::intConst(0));
-        __ branch(lir_cond_notEqual, overflow);
+        __ branch(lir_cond_notEqual, T_ILLEGAL, overflow);
       } else {
-        __ branch(lir_cond_always, overflow);
+        __ branch(lir_cond_always, T_ILLEGAL, overflow);
       }
     } else {
       LIR_Opr mask = load_immediate(freq, T_INT);
@@ -3304,7 +3297,7 @@ void LIRGenerator::increment_event_counter_impl(CodeEmitInfo* info,
       }
       __ logical_and(result, mask, result);
       __ cmp(lir_cond_equal, result, LIR_OprFact::intConst(0));
-      __ branch(lir_cond_equal, overflow);
+      __ branch(lir_cond_equal, T_INT, overflow);
     }
     __ branch_destination(overflow->continuation());
   }
@@ -3418,7 +3411,7 @@ void LIRGenerator::do_RangeCheckPredicate(RangeCheckPredicate *x) {
     CodeStub* stub = new PredicateFailedStub(info);
 
     __ cmp(lir_cond(cond), left, right);
-    __ branch(lir_cond(cond), stub);
+    __ branch(lir_cond(cond), right->type(), stub);
   }
 }
 

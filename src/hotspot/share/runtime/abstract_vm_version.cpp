@@ -182,7 +182,8 @@ const char* Abstract_VM_Version::vm_release() {
                  IA32_ONLY("x86")                \
                  IA64_ONLY("ia64")               \
                  S390_ONLY("s390")               \
-                 RISCV64_ONLY("riscv64")
+                 RISCV64_ONLY("riscv64")         \
+                 SPARC_ONLY("sparc")
 #endif // !ZERO
 #endif // !CPU
 

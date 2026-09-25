@@ -68,7 +68,14 @@ public:
   static inline address real_pc(const frame& f);
   static inline void patch_pc(const frame& f, address pc);
   static address* return_pc_address(const frame& f);
-  static address return_pc(const frame& f) { return *return_pc_address(f); }
+  static address return_pc(const frame& f) {
+#ifdef SPARC
+    return f.is_heap_frame() ? *return_pc_address(f)
+                             : *return_pc_address(f) + frame::pc_return_offset;
+#else
+    return *return_pc_address(f);
+#endif
+  }
   static bool is_stub(CodeBlob* cb);
 
 #ifdef ASSERT

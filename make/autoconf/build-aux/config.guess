@@ -75,13 +75,24 @@ if test $? = 0; then
   fi
 fi
 
-# Test and fix solaris on x86_64
-echo $OUT | grep i386-pc-solaris > /dev/null 2> /dev/null
-if test $? = 0; then
-  # isainfo -n returns either i386 or amd64
-  REAL_CPU=`isainfo -n`
-  OUT=$REAL_CPU`echo $OUT | sed -e 's/[^-]*//'`
-fi
+# Test and fix Solaris on x86_64 and SPARC V9.
+case "$OUT" in
+  i386-pc-solaris*)
+    # isainfo -n returns either i386 or amd64.
+    REAL_CPU=`isainfo -n 2>/dev/null`
+    case "$REAL_CPU" in
+      i386|amd64) OUT=$REAL_CPU`echo "$OUT" | sed -e 's/^[^-]*//'` ;;
+    esac
+    ;;
+  sparc-sun-solaris*|sparc-*-solaris*)
+    # On Solaris/SPARC, isainfo -n returns sparc or sparcv9.
+    # Preserve the vendor/OS portion of the autoconf result.
+    REAL_CPU=`isainfo -n 2>/dev/null`
+    case "$REAL_CPU" in
+      sparc|sparcv9) OUT=$REAL_CPU`echo "$OUT" | sed -e 's/^[^-]*//'` ;;
+    esac
+    ;;
+esac
 
 # Test and fix cygwin on x86_64
 echo $OUT | grep 86-pc-cygwin > /dev/null 2> /dev/null
@@ -123,22 +134,22 @@ if test $? = 0; then
 fi
 
 # Test and fix cpu on macos-aarch64, uname -p reports arm, buildsys expects aarch64
-echo $OUT | grep arm-apple-darwin > /dev/null 2> /dev/null
+echo "$OUT" | grep arm-apple-darwin > /dev/null 2> /dev/null
 if test $? != 0; then
   # The GNU version of uname may be on the PATH which reports arm64 instead
-  echo $OUT | grep arm64-apple-darwin > /dev/null 2> /dev/null
+  echo "$OUT" | grep arm64-apple-darwin > /dev/null 2> /dev/null
 fi
 if test $? = 0; then
   if [ `uname -m` = arm64 ]; then
-    OUT=aarch64`echo $OUT | sed -e 's/[^-]*//'`
+    OUT=aarch64`echo "$OUT" | sed -e 's/^[^-]*//'`
   fi
 fi
 
 # Test and fix cpu on Macosx when C preprocessor is not on the path
-echo $OUT | grep i386-apple-darwin > /dev/null 2> /dev/null
+echo "$OUT" | grep i386-apple-darwin > /dev/null 2> /dev/null
 if test $? = 0; then
   REAL_CPU=`uname -m`
-  OUT=$REAL_CPU`echo $OUT | sed -e 's/[^-]*//'`
+  OUT=$REAL_CPU`echo "$OUT" | sed -e 's/^[^-]*//'`
 fi
 
-echo $OUT
+echo "$OUT"

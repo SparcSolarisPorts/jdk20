@@ -47,6 +47,9 @@ extern "C" bool dbg_is_safe(const void* p, intptr_t errvalue);
 
 template <ChunkFrames frame_kind>
 StackChunkFrameStream<frame_kind>::StackChunkFrameStream(stackChunkOop chunk) DEBUG_ONLY(: _chunk(chunk)) {
+#ifdef SPARC
+  _pd_younger_sp = nullptr;
+#endif
   assert(chunk->is_stackChunk_noinline(), "");
   assert(frame_kind == ChunkFrames::Mixed || !chunk->has_mixed_frames(), "");
 
@@ -72,6 +75,9 @@ StackChunkFrameStream<frame_kind>::StackChunkFrameStream(stackChunkOop chunk) DE
 template <ChunkFrames frame_kind>
 StackChunkFrameStream<frame_kind>::StackChunkFrameStream(stackChunkOop chunk, const frame& f)
   DEBUG_ONLY(: _chunk(chunk)) {
+#ifdef SPARC
+  _pd_younger_sp = f.younger_sp_or_null();
+#endif
   assert(chunk->is_stackChunk_noinline(), "");
   assert(frame_kind == ChunkFrames::Mixed || !chunk->has_mixed_frames(), "");
   // assert(!is_empty(), ""); -- allowed to be empty
@@ -208,6 +214,9 @@ template <typename RegisterMapT>
 inline void StackChunkFrameStream<frame_kind>::next(RegisterMapT* map, bool stop) {
   update_reg_map(map);
   bool safepoint = is_stub();
+#ifdef SPARC
+  _pd_younger_sp = _sp;
+#endif
   if (frame_kind == ChunkFrames::Mixed) {
     if (is_interpreted()) {
       next_for_interpreter_frame();
@@ -282,8 +291,13 @@ template <ChunkFrames frame_kind>
 template <typename RegisterMapT>
 inline void* StackChunkFrameStream<frame_kind>::reg_to_loc(VMReg reg, const RegisterMapT* map) const {
   assert(!is_done(), "");
+#ifdef SPARC
+  return reg->is_reg() ? reg_to_loc_pd(reg, map)
+                       : (void*)((address)unextended_sp() + (reg->reg2stack() * VMRegImpl::stack_slot_size));
+#else
   return reg->is_reg() ? (void*)map->location(reg, sp()) // see frame::update_map_with_saved_link(&map, link_addr);
                        : (void*)((address)unextended_sp() + (reg->reg2stack() * VMRegImpl::stack_slot_size));
+#endif
 }
 
 template<>

@@ -227,6 +227,15 @@ void Fingerprinter::do_type_calling_convention(BasicType type) {
   // args number... poorly, at least for 32-bit ports and for zero. Current code has the fallback
   // that recomputes the stack args number from SharedRuntime::java_calling_convention.
 #if defined(_LP64) && !defined(ZERO)
+#if defined(SPARC)
+  // SPARC Java calls use I0-I5 for incoming integer arguments and F0-F7
+  // for floating-point arguments.
+  const int int_register_parameters = 6;
+  const int float_register_parameters = 8;
+#else
+  const int int_register_parameters = Argument::n_int_register_parameters_j;
+  const int float_register_parameters = Argument::n_float_register_parameters_j;
+#endif
   switch (type) {
   case T_VOID:
     break;
@@ -236,7 +245,7 @@ void Fingerprinter::do_type_calling_convention(BasicType type) {
   case T_SHORT:
   case T_INT:
 #if defined(PPC64) || defined(S390)
-    if (_int_args < Argument::n_int_register_parameters_j) {
+    if (_int_args < int_register_parameters) {
       _int_args++;
     } else {
       _stack_arg_slots += 1;
@@ -247,7 +256,7 @@ void Fingerprinter::do_type_calling_convention(BasicType type) {
   case T_OBJECT:
   case T_ARRAY:
   case T_ADDRESS:
-    if (_int_args < Argument::n_int_register_parameters_j) {
+    if (_int_args < int_register_parameters) {
       _int_args++;
     } else {
       PPC64_ONLY(_stack_arg_slots = align_up(_stack_arg_slots, 2));
@@ -257,7 +266,7 @@ void Fingerprinter::do_type_calling_convention(BasicType type) {
     break;
   case T_FLOAT:
 #if defined(PPC64) || defined(S390)
-    if (_fp_args < Argument::n_float_register_parameters_j) {
+    if (_fp_args < float_register_parameters) {
       _fp_args++;
     } else {
       _stack_arg_slots += 1;
@@ -265,7 +274,7 @@ void Fingerprinter::do_type_calling_convention(BasicType type) {
     break;
 #endif // defined(PPC64) || defined(S390)
   case T_DOUBLE:
-    if (_fp_args < Argument::n_float_register_parameters_j) {
+    if (_fp_args < float_register_parameters) {
       _fp_args++;
     } else {
       PPC64_ONLY(_stack_arg_slots = align_up(_stack_arg_slots, 2));

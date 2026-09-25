@@ -75,7 +75,12 @@ inline bool ContinuationHelper::InterpretedFrame::is_instance(const frame& f) {
 }
 
 inline address ContinuationHelper::InterpretedFrame::return_pc(const frame& f) {
+#ifdef SPARC
+  return f.is_heap_frame() ? *return_pc_address(f)
+                           : *return_pc_address(f) + frame::pc_return_offset;
+#else
   return *return_pc_address(f);
+#endif
 }
 
 inline int ContinuationHelper::InterpretedFrame::size(const frame&f) {

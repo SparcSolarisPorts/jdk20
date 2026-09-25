@@ -32,10 +32,17 @@
 // lookups for that information all over the place.
 struct G1HeapRegionAttr {
 public:
+  // We use different types to represent the state value depending on platform as
+  // some have issues loading parts of words.
+#ifdef SPARC
+  typedef int32_t region_type_t;
+  typedef uint32_t remset_is_tracked_t;
+#else
   typedef int8_t region_type_t;
   // remset_is_tracked_t is essentially bool, but we need precise control
   // on the size, and sizeof(bool) is implementation specific.
   typedef uint8_t remset_is_tracked_t;
+#endif
 
 private:
   remset_is_tracked_t _remset_is_tracked;

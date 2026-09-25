@@ -768,7 +768,7 @@ frame FreezeBase::freeze_start_frame_yield_stub(frame f) {
 }
 
 frame FreezeBase::freeze_start_frame_safepoint_stub(frame f) {
-#if (defined(X86) || defined(AARCH64) || defined(RISCV64)) && !defined(ZERO)
+#if (defined(X86) || defined(AARCH64) || defined(RISCV64) || defined(SPARC)) && !defined(ZERO)
   f.set_fp(f.real_fp()); // f.set_fp(*Frame::callee_link_address(f)); // ????
 #else
   Unimplemented();
@@ -1600,10 +1600,10 @@ static freeze_result is_pinned0(JavaThread* thread, oop cont_scope, bool safepoi
   if (!safepoint) {
     f = f.sender(&map); // this is the yield frame
   } else { // safepoint yield
-#if (defined(X86) || defined(AARCH64) || defined(RISCV64)) && !defined(ZERO)
+#if (defined(X86) || defined(AARCH64) || defined(RISCV64) || defined(SPARC)) && !defined(ZERO)
     f.set_fp(f.real_fp()); // Instead of this, maybe in ContinuationWrapper::set_last_frame always use the real_fp?
 #else
-    Unimplemented();
+    ShouldNotReachHere();
 #endif
     if (!Interpreter::contains(f.pc())) {
       assert(ContinuationHelper::Frame::is_stub(f.cb()), "must be");

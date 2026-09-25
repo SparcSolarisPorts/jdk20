@@ -741,7 +741,13 @@ void ArchDesc::declare_pipe_classes(FILE *fp_hpp) {
   fprintf(fp_hpp, "// Pipeline_Use_Cycle_Mask Class\n");
   fprintf(fp_hpp, "class Pipeline_Use_Cycle_Mask {\n");
 
-  if (_pipeline->_maxcycleused <= 32) {
+  if (_pipeline->_maxcycleused <=
+#ifdef SPARC
+    64
+#else
+    32
+#endif
+      ) {
     fprintf(fp_hpp, "protected:\n");
     fprintf(fp_hpp, "  %s _mask;\n\n", _pipeline->_maxcycleused <= 32 ? "uint" : "uint64_t" );
     fprintf(fp_hpp, "public:\n");

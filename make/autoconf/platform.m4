@@ -483,6 +483,8 @@ AC_DEFUN([PLATFORM_SETUP_LEGACY_VARS_HELPER],
   if test "x$OPENJDK_$1_OS" = xsolaris; then
     if test "x$OPENJDK_$1_CPU" = xx86_64; then
       OPENJDK_$1_CPU_ISADIR="/amd64"
+    elif test "x$OPENJDK_$1_CPU" = xsparcv9; then
+      OPENJDK_$1_CPU_ISADIR="/sparcv9"
     fi
   fi
   AC_SUBST(OPENJDK_$1_CPU_ISADIR)

@@ -1213,7 +1213,12 @@ void Deoptimization::reassign_type_array_elements(frame* fr, RegisterMap* reg_ma
 #ifdef _LP64
       jlong res = (jlong)low->get_int();
 #else
+#ifdef SPARC
+      // For SPARC we have to swap high and low words.
+      jlong res = jlong_from((jint)low->get_int(), (jint)value->get_int());
+#else
       jlong res = jlong_from((jint)value->get_int(), (jint)low->get_int());
+#endif //SPARC
 #endif
       obj->long_at_put(index, res);
       break;
@@ -1242,7 +1247,12 @@ void Deoptimization::reassign_type_array_elements(frame* fr, RegisterMap* reg_ma
   #ifdef _LP64
         jlong res = (jlong)low->get_int();
   #else
+  #ifdef SPARC
+        // For SPARC we have to swap high and low words.
+        jlong res = jlong_from((jint)low->get_int(), (jint)value->get_int());
+  #else
         jlong res = jlong_from((jint)value->get_int(), (jint)low->get_int());
+  #endif //SPARC
   #endif
         obj->int_at_put(index, (jint)*((jint*)&res));
         obj->int_at_put(++index, (jint)*(((jint*)&res) + 1));
@@ -1387,7 +1397,12 @@ static int reassign_fields_by_klass(InstanceKlass* klass, frame* fr, RegisterMap
 #ifdef _LP64
         jlong res = (jlong)low->get_int();
 #else
+#ifdef SPARC
+        // For SPARC we have to swap high and low words.
+        jlong res = jlong_from((jint)low->get_int(), (jint)value->get_int());
+#else
         jlong res = jlong_from((jint)value->get_int(), (jint)low->get_int());
+#endif //SPARC
 #endif
         obj->long_field_put(offset, res);
         break;

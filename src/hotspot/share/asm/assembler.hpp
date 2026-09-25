@@ -312,6 +312,11 @@ class AbstractAssembler : public ResourceObj  {
   static bool is_simm10(int64_t x) { return is_simm(x, 10); }
   static bool is_simm16(int64_t x) { return is_simm(x, 16); }
   static bool is_simm32(int64_t x) { return is_simm(x, 32); }
+  // extras needed for sparc
+  static bool is_simm5(int64_t x) { return is_simm(x, 5); }
+  static bool is_simm11(int64_t x) { return is_simm(x, 11); }
+  static bool is_simm12(int64_t x) { return is_simm(x, 12); }
+  static bool is_simm13(int64_t x) { return is_simm(x, 13); }
 
   // Test if x is within unsigned immediate range for width.
   static bool is_uimm(uint64_t x, uint w) {

@@ -93,6 +93,13 @@ void GraphKit::gen_stub(address C_function,
                                             thread,
                                             in_bytes(JavaThread::frame_anchor_offset()) +
                                             in_bytes(JavaFrameAnchor::last_Java_pc_offset()));
+#if defined(SPARC)
+  Node* adr_flags = basic_plus_adr(top(),
+                                   thread,
+                                   in_bytes(JavaThread::frame_anchor_offset()) +
+                                   in_bytes(JavaFrameAnchor::flags_offset()));
+#endif /* defined(SPARC) */
+
 
   // Drop in the last_Java_sp.  last_Java_fp is not touched.
   // Always do this after the other "last_Java_frame" fields are set since
@@ -100,7 +107,7 @@ void GraphKit::gen_stub(address C_function,
   // users will look at the other fields.
   //
   Node *adr_sp = basic_plus_adr(top(), thread, in_bytes(JavaThread::last_Java_sp_offset()));
-  Node *last_sp = frameptr();
+  Node *last_sp = basic_plus_adr(top(), frameptr(), (intptr_t) STACK_BIAS);
   store_to_memory(control(), adr_sp, last_sp, T_ADDRESS, NoAlias, MemNode::unordered);
 
   // Set _thread_in_native
@@ -222,8 +229,11 @@ void GraphKit::gen_stub(address C_function,
 
   // Clear last_Java_sp
   store_to_memory(control(), adr_sp, null(), T_ADDRESS, NoAlias, MemNode::unordered);
-  // Clear last_Java_pc
+  // Clear last_Java_pc and (optionally)_flags
   store_to_memory(control(), adr_last_Java_pc, null(), T_ADDRESS, NoAlias, MemNode::unordered);
+#if defined(SPARC)
+  store_to_memory(control(), adr_flags, intcon(0), T_INT, NoAlias, MemNode::unordered);
+#endif /* defined(SPARC) */
 #if (defined(IA64) && !defined(AIX))
   Node* adr_last_Java_fp = basic_plus_adr(top(), thread, in_bytes(JavaThread::last_Java_fp_offset()));
   store_to_memory(control(), adr_last_Java_fp, null(), T_ADDRESS, NoAlias, MemNode::unordered);
