@@ -32,7 +32,6 @@ include JdkNativeCompilation.gmk
 include HotspotCommon.gmk
 
 include lib/CompileJvm.gmk
-include lib/CompileDtraceLibraries.gmk
 
 ifneq ($(GTEST_FRAMEWORK_SRC), )
   ifneq ($(CREATING_BUILDJDK), true)
