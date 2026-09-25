@@ -3386,8 +3386,6 @@ void TemplateTable::_new() {
   //
   //  Go to slow path.
 
-  const bool allow_shared_alloc =
-    Universe::heap()->supports_inline_contig_alloc();
 
   if(UseTLAB) {
     Register RoldTopValue = RallocatedObject;
@@ -3416,39 +3414,11 @@ void TemplateTable::_new() {
     __ ba_short(slow_case);
   } else {
     // Allocation in the shared Eden
-    if (allow_shared_alloc) {
-      Register RoldTopValue = G1_scratch;
-      Register RtopAddr = G3_scratch;
-      Register RnewTopValue = RallocatedObject;
-      Register RendValue = Rscratch;
-
-      __ set((intptr_t)Universe::heap()->top_addr(), RtopAddr);
-
-      Label retry;
-      __ bind(retry);
-      __ set((intptr_t)Universe::heap()->end_addr(), RendValue);
-      __ ld_ptr(RendValue, 0, RendValue);
-      __ ld_ptr(RtopAddr, 0, RoldTopValue);
-      __ add(RoldTopValue, Roffset, RnewTopValue);
-
-      // RnewTopValue contains the top address after the new object
-      // has been allocated.
-      __ cmp_and_brx_short(RnewTopValue, RendValue, Assembler::greaterUnsigned, Assembler::pn, slow_case);
-
-      __ cas_ptr(RtopAddr, RoldTopValue, RnewTopValue);
-
-      // if someone beat us on the allocation, try again, otherwise continue
-      __ cmp_and_brx_short(RoldTopValue, RnewTopValue, Assembler::notEqual, Assembler::pn, retry);
-
-      // bump total bytes allocated by this thread
-      // RoldTopValue and RtopAddr are dead, so can use G1 and G3
-      __ incr_allocated_bytes(Roffset, G1_scratch, G3_scratch);
-    }
   }
 
-  // If UseTLAB or allow_shared_alloc are true, the object is created above and
-  // there is an initialize need. Otherwise, skip and go to the slow path.
-  if (UseTLAB || allow_shared_alloc) {
+  // If UseTLAB is true, the object is created above and there is an
+  // initialize need. Otherwise, skip and go to the slow path.
+  if (UseTLAB) {
     // clear object fields
     __ bind(initialize_object);
     __ deccc(Roffset, sizeof(oopDesc));

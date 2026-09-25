@@ -410,63 +410,6 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
           __ set_info("fast new_instance init check", dont_gc_arguments);
         }
 
-        // If TLAB is disabled, see if there is support for inlining contiguous
-        // allocations.
-        // Otherwise, just go to the slow path.
-        if ((id == fast_new_instance_id || id == fast_new_instance_init_check_id) &&
-            !UseTLAB && Universe::heap()->supports_inline_contig_alloc()) {
-          Label slow_path;
-          Register G1_obj_size = G1;
-          Register G3_t1 = G3;
-          Register G4_t2 = G4;
-          assert_different_registers(G5_klass, G1_obj_size, G3_t1, G4_t2);
-
-          // Push a frame since we may do dtrace notification for the
-          // allocation which requires calling out and we don't want
-          // to stomp the real return address.
-          __ save_frame(0);
-
-          if (id == fast_new_instance_init_check_id) {
-            // make sure the klass is initialized
-            __ ldub(G5_klass, in_bytes(InstanceKlass::init_state_offset()), G3_t1);
-            __ cmp(G3_t1, InstanceKlass::fully_initialized);
-            __ br(Assembler::notEqual, false, Assembler::pn, slow_path);
-            __ delayed()->nop();
-          }
-#ifdef ASSERT
-          // assert object can be fast path allocated
-          {
-            Label ok, not_ok;
-          __ ld(G5_klass, in_bytes(Klass::layout_helper_offset()), G1_obj_size);
-          // make sure it's an instance (LH > 0)
-          __ cmp_and_br_short(G1_obj_size, 0, Assembler::lessEqual, Assembler::pn, not_ok);
-          __ btst(Klass::_lh_instance_slow_path_bit, G1_obj_size);
-          __ br(Assembler::zero, false, Assembler::pn, ok);
-          __ delayed()->nop();
-          __ bind(not_ok);
-          __ stop("assert(can be fast path allocated)");
-          __ should_not_reach_here();
-          __ bind(ok);
-          }
-#endif // ASSERT
-
-          // If we got here then the TLAB allocation failed, so try allocating directly from eden.
-          // get the instance size
-          __ ld(G5_klass, in_bytes(Klass::layout_helper_offset()), G1_obj_size);
-          __ eden_allocate(O0_obj, G1_obj_size, 0, G3_t1, G4_t2, slow_path);
-          __ incr_allocated_bytes(G1_obj_size, G3_t1, G4_t2);
-
-          __ initialize_object(O0_obj, G5_klass, G1_obj_size, 0, G3_t1, G4_t2, /* is_tlab_allocated */ false);
-          __ verify_oop(O0_obj);
-          __ mov(O0, I0);
-          __ ret();
-          __ delayed()->restore();
-
-          __ bind(slow_path);
-
-          // pop this frame so generate_stub_call can push it's own
-          __ restore();
-        }
 
         oop_maps = generate_stub_call(sasm, I0, CAST_FROM_FN_PTR(address, new_instance), G5_klass);
         // I0->O0: new instance

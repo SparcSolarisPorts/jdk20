@@ -2677,6 +2677,7 @@ void MacroAssembler::verify_tlab() {
 }
 
 
+
 void MacroAssembler::eden_allocate(
   Register obj,                        // result: pointer to object after successful allocation
   Register var_size_in_bytes,          // object size in bytes if unknown at compile time; invalid otherwise
@@ -2685,79 +2686,10 @@ void MacroAssembler::eden_allocate(
   Register t2,                         // temp register
   Label&   slow_case                   // continuation point if fast allocation fails
 ){
-  // make sure arguments make sense
-  assert_different_registers(obj, var_size_in_bytes, t1, t2);
-  assert(0 <= con_size_in_bytes && Assembler::is_simm13(con_size_in_bytes), "illegal object size");
-  assert((con_size_in_bytes & MinObjAlignmentInBytesMask) == 0, "object size is not multiple of alignment");
-
-  if (!Universe::heap()->supports_inline_contig_alloc()) {
-    // No allocation in the shared eden.
-    ba(slow_case);
-    delayed()->nop();
-  } else {
-    // get eden boundaries
-    // note: we need both top & top_addr!
-    const Register top_addr = t1;
-    const Register end      = t2;
-
-    CollectedHeap* ch = Universe::heap();
-    set((intx)ch->top_addr(), top_addr);
-    intx delta = (intx)ch->end_addr() - (intx)ch->top_addr();
-    ld_ptr(top_addr, delta, end);
-    ld_ptr(top_addr, 0, obj);
-
-    // try to allocate
-    Label retry;
-    bind(retry);
-#ifdef ASSERT
-    // make sure eden top is properly aligned
-    {
-      Label L;
-      btst(MinObjAlignmentInBytesMask, obj);
-      br(Assembler::zero, false, Assembler::pt, L);
-      delayed()->nop();
-      STOP("eden top is not properly aligned");
-      bind(L);
-    }
-#endif // ASSERT
-    const Register free = end;
-    sub(end, obj, free);                                   // compute amount of free space
-    if (var_size_in_bytes->is_valid()) {
-      // size is unknown at compile time
-      cmp(free, var_size_in_bytes);
-      brx(Assembler::lessUnsigned, false, Assembler::pn, slow_case); // if there is not enough space go the slow case
-      delayed()->add(obj, var_size_in_bytes, end);
-    } else {
-      // size is known at compile time
-      cmp(free, con_size_in_bytes);
-      brx(Assembler::lessUnsigned, false, Assembler::pn, slow_case); // if there is not enough space go the slow case
-      delayed()->add(obj, con_size_in_bytes, end);
-    }
-    // Compare obj with the value at top_addr; if still equal, swap the value of
-    // end with the value at top_addr. If not equal, read the value at top_addr
-    // into end.
-    cas_ptr(top_addr, obj, end);
-    // if someone beat us on the allocation, try again, otherwise continue
-    cmp(obj, end);
-    brx(Assembler::notEqual, false, Assembler::pn, retry);
-    delayed()->mov(end, obj);                              // nop if successfull since obj == end
-
-#ifdef ASSERT
-    // make sure eden top is properly aligned
-    {
-      Label L;
-      const Register top_addr = t1;
-
-      set((intx)ch->top_addr(), top_addr);
-      ld_ptr(top_addr, 0, top_addr);
-      btst(MinObjAlignmentInBytesMask, top_addr);
-      br(Assembler::zero, false, Assembler::pt, L);
-      delayed()->nop();
-      STOP("eden top is not properly aligned");
-      bind(L);
-    }
-#endif // ASSERT
-  }
+  // Inline contiguous (shared-eden) allocation was removed in JDK 20
+  // (TLAB-only); always take the slow path.
+  ba(slow_case);
+  delayed()->nop();
 }
 
 

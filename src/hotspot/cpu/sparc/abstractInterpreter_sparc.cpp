@@ -175,7 +175,7 @@ void AbstractInterpreter::layout_activation(Method* method,
   intptr_t* fp = interpreter_frame->fp();
 
   JavaThread* thread = JavaThread::current();
-  RegisterMap map(thread, false);
+  RegisterMap map(thread, RegisterMap::UpdateMap::skip, RegisterMap::ProcessFrames::include, RegisterMap::WalkContinuation::include);
   // More verification that skeleton frame is properly walkable
   assert(fp == caller->sp(), "fp must match");
 
