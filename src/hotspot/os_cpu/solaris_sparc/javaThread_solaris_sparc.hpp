@@ -22,8 +22,8 @@
  *
  */
 
-#ifndef OS_CPU_SOLARIS_SPARC_THREAD_SOLARIS_SPARC_HPP
-#define OS_CPU_SOLARIS_SPARC_THREAD_SOLARIS_SPARC_HPP
+#ifndef OS_CPU_SOLARIS_SPARC_JAVATHREAD_SOLARIS_SPARC_HPP
+#define OS_CPU_SOLARIS_SPARC_JAVATHREAD_SOLARIS_SPARC_HPP
 private:
 
   void pd_initialize() {
@@ -78,4 +78,4 @@ public:
 private:
   bool pd_get_top_frame(frame* fr_addr, void* ucontext, bool isInJava, bool makeWalkable);
 
-#endif // OS_CPU_SOLARIS_SPARC_THREAD_SOLARIS_SPARC_HPP
+#endif // OS_CPU_SOLARIS_SPARC_JAVATHREAD_SOLARIS_SPARC_HPP
