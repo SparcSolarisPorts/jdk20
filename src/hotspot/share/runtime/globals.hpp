@@ -692,6 +692,10 @@ const int ObjectAlignmentInBytes = 8;
   product_pd(bool, DontYieldALot,                                           \
           "Throw away obvious excess yield calls")                          \
                                                                             \
+  develop(bool, UseDetachedThreads, true,                                   \
+          "Use detached threads that are recycled upon termination "        \
+          "(for Solaris only)")                                             \
+                                                                            \
   product(bool, DisablePrimordialThreadGuardPages, false, EXPERIMENTAL,     \
                "Disable the use of stack guard pages if the JVM is loaded " \
                "on the primordial process thread")                          \
@@ -1614,8 +1618,10 @@ const int ObjectAlignmentInBytes = 8;
   product(int, ThreadPriorityPolicy, 0,                                     \
           "0 : Normal.                                                     "\
           "    VM chooses priorities that are appropriate for normal       "\
-          "    applications.                                               "\
-          "    On Windows applications are allowed to use higher native    "\
+          "    applications. On Solaris NORM_PRIORITY and above are mapped "\
+          "    to normal native priority. Java priorities below "           \
+          "    NORM_PRIORITY map to lower native priority values. On       "\
+          "    Windows applications are allowed to use higher native       "\
           "    priorities. However, with ThreadPriorityPolicy=0, VM will   "\
           "    not use the highest possible native priority,               "\
           "    THREAD_PRIORITY_TIME_CRITICAL, as it may interfere with     "\
@@ -1897,7 +1903,8 @@ const int ObjectAlignmentInBytes = 8;
   product(bool, WhiteBoxAPI, false, DIAGNOSTIC,                             \
           "Enable internal testing APIs")                                   \
                                                                             \
-  product(size_t, ArrayAllocatorMallocLimit, (size_t)-1, EXPERIMENTAL,      \
+  product(size_t, ArrayAllocatorMallocLimit,                                \
+          SOLARIS_ONLY(64*K) NOT_SOLARIS((size_t)-1), EXPERIMENTAL,         \
           "Allocation less than this value will be allocated "              \
           "using malloc. Larger allocations will use mmap.")                \
                                                                             \
