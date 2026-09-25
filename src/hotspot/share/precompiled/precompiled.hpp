@@ -33,12 +33,12 @@
 
 // Solaris/GCC-15 include-order workaround: several share headers use
 // ResourceHashtable/ResizeableResourceHashtable/PaddedEnd/TruncatedSeq without
-// including their (upstream-split) headers directly; this toolchain does not pull
+// including their defining headers directly; this toolchain does not pull
 // them in transitively before first use, so provide them up front.
 #include "utilities/resourceHash.hpp"
 #include "utilities/resizeableResourceHash.hpp"
 #include "memory/padded.hpp"
-#include "gc/shared/truncatedSeq.hpp"
+#include "utilities/numberSeq.hpp"
 
 #include "classfile/classLoaderData.hpp"
 #include "classfile/javaClasses.hpp"
