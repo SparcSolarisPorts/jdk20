@@ -816,7 +816,6 @@ void emit_form3_mem_reg(CodeBuffer &cbuf, PhaseRegAlloc* ra, const MachNode* n, 
       // a Load
       // inputs are (0:control, 1:memory, 2:address)
       if (!(n->ideal_Opcode()==ld_op)       && // Following are special cases
-          !(n->ideal_Opcode()==Op_LoadPLocked && ld_op==Op_LoadP) &&
           !(n->ideal_Opcode()==Op_LoadI     && ld_op==Op_LoadF) &&
           !(n->ideal_Opcode()==Op_LoadF     && ld_op==Op_LoadI) &&
           !(n->ideal_Opcode()==Op_LoadRange && ld_op==Op_LoadI) &&
@@ -6586,7 +6585,6 @@ instruct cmovLF_reg(cmpOpF cmp, flagsRegF fcc, iRegL dst, iRegL src) %{
 %}
 
 
-
 //----------OS and Locking Instructions----------------------------------------
 
 // This name is KNOWN by the ADLC and cannot be changed.
@@ -6727,50 +6725,6 @@ instruct addL_reg_imm13(iRegL dst, iRegL src1, immL13 con) %{
   ins_pipe(ialu_reg_imm);
 %}
 
-//----------Conditional_store--------------------------------------------------
-// Conditional-store of the updated heap-top.
-// Used during allocation of the shared heap.
-// Sets flags (EQ) on success.  Implemented with a CASA on Sparc.
-
-// LoadP-locked.  Same as a regular pointer load when used with a compare-swap
-instruct loadPLocked(iRegP dst, memory mem) %{
-  match(Set dst (LoadPLocked mem));
-  ins_cost(MEMORY_REF_COST);
-
-  format %{ "LDX    $mem,$dst\t! ptr" %}
-  opcode(Assembler::ldx_op3, 0, REGP_OP);
-  ins_encode( form3_mem_reg( mem, dst ) );
-  ins_pipe(iload_mem);
-%}
-
-instruct storePConditional( iRegP heap_top_ptr, iRegP oldval, g3RegP newval, flagsRegP pcc ) %{
-  match(Set pcc (StorePConditional heap_top_ptr (Binary oldval newval)));
-  effect( KILL newval );
-  format %{ "CASA   [$heap_top_ptr],$oldval,R_G3\t! If $oldval==[$heap_top_ptr] Then store R_G3 into [$heap_top_ptr], set R_G3=[$heap_top_ptr] in any case\n\t"
-            "CMP    R_G3,$oldval\t\t! See if we made progress"  %}
-  ins_encode( enc_cas(heap_top_ptr,oldval,newval) );
-  ins_pipe( long_memory_op );
-%}
-
-// Conditional-store of an int value.
-instruct storeIConditional( iRegP mem_ptr, iRegI oldval, g3RegI newval, flagsReg icc ) %{
-  match(Set icc (StoreIConditional mem_ptr (Binary oldval newval)));
-  effect( KILL newval );
-  format %{ "CASA   [$mem_ptr],$oldval,$newval\t! If $oldval==[$mem_ptr] Then store $newval into [$mem_ptr], set $newval=[$mem_ptr] in any case\n\t"
-            "CMP    $oldval,$newval\t\t! See if we made progress"  %}
-  ins_encode( enc_cas(mem_ptr,oldval,newval) );
-  ins_pipe( long_memory_op );
-%}
-
-// Conditional-store of a long value.
-instruct storeLConditional( iRegP mem_ptr, iRegL oldval, g3RegL newval, flagsRegL xcc ) %{
-  match(Set xcc (StoreLConditional mem_ptr (Binary oldval newval)));
-  effect( KILL newval );
-  format %{ "CASXA  [$mem_ptr],$oldval,$newval\t! If $oldval==[$mem_ptr] Then store $newval into [$mem_ptr], set $newval=[$mem_ptr] in any case\n\t"
-            "CMP    $oldval,$newval\t\t! See if we made progress"  %}
-  ins_encode( enc_cas(mem_ptr,oldval,newval) );
-  ins_pipe( long_memory_op );
-%}
 
 // No flag versions for CompareAndSwap{P,I,L} because matcher can't match them
 
