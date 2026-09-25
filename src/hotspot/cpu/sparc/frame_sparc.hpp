@@ -115,6 +115,10 @@
     // Continuation stack chunks copy the SPARC register save area as part of
     // the frame, so no metadata words live below SP.
     metadata_words                               = 0,
+    // JDK20 names used by stackChunkOop/continuation code; on SPARC both are
+    // zero for the same reason (register save area travels with the frame).
+    metadata_words_at_top                        = 0,
+    metadata_words_at_bottom                     = metadata_words,
     sender_sp_offset                              = 0,
     frame_alignment                              = 16,
     align_wiggle                                 = 1,

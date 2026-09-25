@@ -79,3 +79,9 @@
 #endif // TARGET_COMPILER_visCPP
 
 #endif // !DONT_USE_PRECOMPILED_HEADER
+
+// Solaris/GCC-15 build workaround: several utility headers are used
+// transitively by share headers but not included directly; this toolchain
+// resolves the transitive chain differently, so pull them in explicitly.
+#include "utilities/padded.hpp"
+#include "utilities/resourceHashtable.hpp"
