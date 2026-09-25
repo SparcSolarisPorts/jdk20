@@ -31,6 +31,15 @@
 // measurements made in November 2018. This list excludes files named
 // *.include.hpp, since including them decreased build performance.
 
+// Solaris/GCC-15 include-order workaround: several share headers use
+// ResourceHashtable/ResizeableResourceHashtable/PaddedEnd/TruncatedSeq without
+// including their (upstream-split) headers directly; this toolchain does not pull
+// them in transitively before first use, so provide them up front.
+#include "utilities/resourceHash.hpp"
+#include "utilities/resizeableResourceHash.hpp"
+#include "memory/padded.hpp"
+#include "gc/shared/truncatedSeq.hpp"
+
 #include "classfile/classLoaderData.hpp"
 #include "classfile/javaClasses.hpp"
 #include "classfile/systemDictionary.hpp"
@@ -80,8 +89,3 @@
 
 #endif // !DONT_USE_PRECOMPILED_HEADER
 
-// Solaris/GCC-15 build workaround: several utility headers are used
-// transitively by share headers but not included directly; this toolchain
-// resolves the transitive chain differently, so pull them in explicitly.
-#include "utilities/padded.hpp"
-#include "utilities/resourceHashtable.hpp"
