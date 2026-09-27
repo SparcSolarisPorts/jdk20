@@ -27,8 +27,12 @@
 
 private:
   void pd_initialize() {}
+  // No shared stubs/trampolines on SPARC: nothing to emit, finalization can
+  // complete immediately (contract: false = emitted stubs, retry later).
+  bool pd_finalize_stubs() { return true; }
 
 public:
   void flush_bundle(bool start_new_bundle) {}
+  static constexpr bool supports_shared_stubs() { return false; }
 
 #endif // CPU_SPARC_CODEBUFFER_SPARC_HPP

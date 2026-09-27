@@ -193,9 +193,6 @@ inline void ThawBase::prefetch_chunk_pd(void* start, int size) {
   if (size >= 64) Prefetch::read(start, size - 64);
 }
 
-inline void ThawBase::patch_chunk_pd(intptr_t* sp) {
-  sp[freeze_sparc_fp_slot] = (intptr_t)_cont.entryFP();
-}
 
 //// Thaw slow path
 

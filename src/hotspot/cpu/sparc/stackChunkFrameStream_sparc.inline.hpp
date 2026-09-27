@@ -91,12 +91,6 @@ inline intptr_t* StackChunkFrameStream<frame_kind>::unextended_sp_for_interprete
   return raw > -max_jint && raw < max_jint ? fp() + raw : (intptr_t*)raw;
 }
 
-template <ChunkFrames frame_kind>
-intptr_t* StackChunkFrameStream<frame_kind>::next_sp_for_interpreter_frame() const {
-  assert_is_interpreted_and_frame_type_mixed();
-  intptr_t* next = fp();
-  return next >= _end ? _end : next;
-}
 
 template <ChunkFrames frame_kind>
 inline void StackChunkFrameStream<frame_kind>::next_for_interpreter_frame() {

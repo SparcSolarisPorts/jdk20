@@ -132,7 +132,8 @@ inline address* ContinuationHelper::InterpretedFrame::return_pc_address(
 }
 
 inline void ContinuationHelper::InterpretedFrame::patch_sender_sp(
-    frame& f, intptr_t* sp) {
+    frame& f, const frame& caller) {
+  intptr_t* sp = caller.sp();
   f.sp()[sparc_i5_saved_sp_slot] = f.is_heap_frame()
       ? (intptr_t)(sp - f.fp())
       : (intptr_t)sp - STACK_BIAS;
