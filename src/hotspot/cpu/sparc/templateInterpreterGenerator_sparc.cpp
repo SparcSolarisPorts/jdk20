@@ -797,20 +797,6 @@ void TemplateInterpreterGenerator::generate_fixed_frame(bool native_call) {
 }
 
 // Method entry for java.lang.ref.Reference.get.
-address TemplateInterpreterGenerator::generate_Continuation_doYield_entry(void) {
-  if (!Continuations::enabled()) return nullptr;
-
-  address entry = __ pc();
-  assert(StubRoutines::cont_doYield() != nullptr, "stub not yet generated");
-
-  // JavaThread::cont_fastpath stores an unbiased address on SPARC V9.
-  __ push_cont_fastpath(G2_thread);
-  AddressLiteral stub(StubRoutines::cont_doYield());
-  __ jump_to(stub, G3_scratch);
-  __ delayed()->nop();
-
-  return entry;
-}
 
 address TemplateInterpreterGenerator::generate_Reference_get_entry(void) {
   // Code: _aload_0, _getfield, _areturn
@@ -1094,7 +1080,7 @@ address TemplateInterpreterGenerator::generate_native_entry(bool synchronized) {
   // the following temporary registers are used during frame creation
   const Register Gtmp1 = G3_scratch ;
   const Register Gtmp2 = G1_scratch;
-  bool inc_counter  = UseCompiler || CountCompiledCalls || LogTouchedMethods;
+  bool inc_counter  = UseCompiler || CountCompiledCalls;
 
   // make sure registers are different!
   assert_different_registers(G2_thread, G5_method, Gargs, Gtmp1, Gtmp2);
@@ -1472,7 +1458,7 @@ address TemplateInterpreterGenerator::generate_native_entry(bool synchronized) {
 address TemplateInterpreterGenerator::generate_normal_entry(bool synchronized) {
   address entry = __ pc();
 
-  bool inc_counter  = UseCompiler || CountCompiledCalls || LogTouchedMethods;
+  bool inc_counter  = UseCompiler || CountCompiledCalls;
 
   // the following temporary registers are used during frame creation
   const Register Gtmp1 = G3_scratch ;

@@ -2295,7 +2295,7 @@ void InterpreterMacroAssembler::get_method_counters(Register method,
 }
 
 void InterpreterMacroAssembler::increment_invocation_counter( Register Rcounters, Register Rtmp, Register Rtmp2 ) {
-  assert(UseCompiler || LogTouchedMethods, "incrementing must be useful");
+  assert(UseCompiler, "incrementing must be useful");
   assert_different_registers(Rcounters, Rtmp, Rtmp2);
 
   Address inv_counter(Rcounters, MethodCounters::invocation_counter_offset() +

@@ -67,7 +67,6 @@ static const Register& Lstub_temp = L2;
 // -------------------------------------------------------------------------------------------------------------------------
 // Stub Code definitions
 
-OopMap* continuation_enter_setup(MacroAssembler* masm, int& stack_slots);
 void fill_continuation_entry(MacroAssembler* masm);
 void continuation_enter_cleanup(MacroAssembler* masm);
 
@@ -5634,73 +5633,6 @@ class StubGenerator: public StubCodeGenerator {
   }
 
 
-  RuntimeStub* generate_cont_doYield() {
-    if (!Continuations::enabled()) return nullptr;
-
-    const char* name = "cont_doYield";
-    const int insts_size = 1024;
-    const int locs_size = 64;
-    CodeBuffer code(name, insts_size, locs_size);
-    OopMapSet* oop_maps = new OopMapSet();
-    MacroAssembler* masm = new MacroAssembler(&code);
-    MacroAssembler* _masm = masm;
-
-    address start = __ pc();
-
-    // Establish a normal SPARC register-window frame.  The unbiased stack
-    // pointer is passed to Continuation::freeze_entry; the architectural SP
-    // itself remains STACK_BIAS biased while executing generated code.
-    __ save_frame(0);
-    __ add(SP, STACK_BIAS, L0);
-
-    const int frame_complete = __ pc() - start;
-
-    // The frame anchor PC must name this RuntimeStub, not the Java caller.
-    // load_pc_address emits rdpc/add and returns the address of the following
-    // instruction; put post_call_nop exactly there so CodeCache/OopMap lookup
-    // has the same invariant used by the x86 and AArch64 Loom stubs.
-    address the_pc = (address)__ load_pc_address(L1, 0);
-    __ post_call_nop();
-
-    __ set_last_Java_frame(SP, L1);
-    __ call_VM_leaf(L7_thread_cache,
-                    Continuation::freeze_entry(),
-                    G2_thread, L0);
-    __ reset_last_Java_frame();
-
-    Label pinned;
-    __ br_notnull_short(O0, Assembler::pt, pinned);
-
-    // Successful freeze.  Unlike flat-register architectures, SPARC cannot
-    // merely assign SP to the ContinuationEntry and execute one restore: the
-    // CWP would still describe the doYield window.  Walk the hardware register
-    // windows back until the window whose SP is the ContinuationEntry is
-    // current.  Window-underflow traps refill spilled windows as necessary.
-    __ ld_ptr(G2_thread, in_bytes(JavaThread::cont_entry_offset()), G1);
-    __ sub(G1, STACK_BIAS, G1); // target architectural (biased) SP
-    Label unwind_to_entry, at_entry;
-    __ bind(unwind_to_entry);
-    __ cmp(SP, G1);
-    __ br(Assembler::equal, false, Assembler::pt, at_entry);
-    __ delayed()->nop();
-    __ restore();
-    __ ba_short(unwind_to_entry);
-
-    __ bind(at_entry);
-    continuation_enter_cleanup(masm);
-
-    __ bind(pinned);
-    __ ret();
-    __ delayed()->restore();
-
-    const int frame_slots = frame::memory_parameter_word_sp_offset * VMRegImpl::slots_per_word;
-    OopMap* map = new OopMap(frame_slots, 0);
-    oop_maps->add_gc_map(the_pc - start, map);
-
-    return RuntimeStub::new_runtime_stub(name, &code, frame_complete,
-                                         frame::memory_parameter_word_sp_offset,
-                                         oop_maps, false);
-  }
 
   address generate_cont_thaw(Continuation::thaw_kind kind) {
     const bool return_barrier = Continuation::is_thaw_return_barrier(kind);
@@ -5830,9 +5762,6 @@ class StubGenerator: public StubCodeGenerator {
     StubRoutines::_cont_thaw = generate_cont_thaw();
     StubRoutines::_cont_returnBarrier = generate_cont_returnBarrier();
     StubRoutines::_cont_returnBarrierExc = generate_cont_returnBarrier_exception();
-    StubRoutines::_cont_doYield_stub = generate_cont_doYield();
-    StubRoutines::_cont_doYield = StubRoutines::_cont_doYield_stub == nullptr
-                                  ? nullptr : StubRoutines::_cont_doYield_stub->entry_point();
   }
 
 
@@ -5992,22 +5921,6 @@ class StubGenerator: public StubCodeGenerator {
 
 // On entry/exit SP is the architectural (STACK_BIAS-biased) stack pointer.
 // ContinuationEntry and JavaThread fields hold ordinary unbiased addresses.
-OopMap* continuation_enter_setup(MacroAssembler* masm, int& stack_slots) {
-  assert(ContinuationEntry::size() % VMRegImpl::stack_slot_size == 0, "");
-
-  const int entry_slots = (int)ContinuationEntry::size() / VMRegImpl::stack_slot_size;
-  stack_slots += entry_slots;
-  __ sub(SP, (int)ContinuationEntry::size(), SP);
-
-  OopMap* map = new OopMap(stack_slots, 0);
-  ContinuationEntry::setup_oopmap(map);
-
-  __ ld_ptr(G2_thread, in_bytes(JavaThread::cont_entry_offset()), G1);
-  __ st_ptr(G1, SP, STACK_BIAS + in_bytes(ContinuationEntry::parent_offset()));
-  __ add(SP, STACK_BIAS, G1);
-  __ st_ptr(G1, G2_thread, in_bytes(JavaThread::cont_entry_offset()));
-  return map;
-}
 
 // enterSpecial(Continuation c, boolean isContinue, boolean isVirtualThread)
 // On Java entry the arguments are caller %o0/%o1/%o2.  After the wrapper's

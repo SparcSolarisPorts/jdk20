@@ -249,11 +249,11 @@ void TemplateTable::sipush() {
   __ get_2_byte_integer_at_bcp(1, G3_scratch, Otos_i, InterpreterMacroAssembler::Signed);
 }
 
-void TemplateTable::ldc(bool wide) {
+void TemplateTable::ldc(LdcType type) {
   transition(vtos, vtos);
   Label call_ldc, notInt, isString, notString, notClass, notFloat, exit;
 
-  if (wide) {
+  if (is_ldc_wide(type)) {
     __ get_2_byte_integer_at_bcp(1, G3_scratch, O1, InterpreterMacroAssembler::Unsigned);
   } else {
     __ ldub(Lbcp, 1, O1);
@@ -278,7 +278,7 @@ void TemplateTable::ldc(bool wide) {
   __ delayed()->add(O0, base_offset, O0);
 
   __ bind(call_ldc);
-  __ set(wide, O1);
+  __ set(is_ldc_wide(type), O1);
   call_VM(Otos_i, CAST_FROM_FN_PTR(address, InterpreterRuntime::ldc), O1);
   __ push(atos);
   __ ba(exit);
@@ -323,10 +323,10 @@ void TemplateTable::ldc(bool wide) {
 // Fast path for caching oop constants.
 // %%% We should use this to handle Class and String constants also.
 // %%% It will simplify the ldc/primitive path considerably.
-void TemplateTable::fast_aldc(bool wide) {
+void TemplateTable::fast_aldc(LdcType type) {
   transition(vtos, atos);
 
-  int index_size = wide ? sizeof(u2) : sizeof(u1);
+  int index_size = is_ldc_wide(type) ? sizeof(u2) : sizeof(u1);
   Label resolved;
 
   // We are resolved if the resolved reference cache entry contains a
