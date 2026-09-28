@@ -346,7 +346,7 @@ void VM_Version::platform_features() {
 
   log_info(os, cpu)("getisax(2) returned %d words:", avn);
   for (int i = 0; i < avn; i++) {
-    log_info(os, cpu)("    word %d: " PTR32_FORMAT, i, avs[i]);
+    log_info(os, cpu)("    word %d: " UINT32_FORMAT, i, avs[i]);
   }
 
   uint32_t av = avs[AV_HW1_IDX];
