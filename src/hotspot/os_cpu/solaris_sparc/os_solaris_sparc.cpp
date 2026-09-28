@@ -541,6 +541,10 @@ void os::Solaris::init_thread_fpu_state(void) {
     // Nothing needed on Sparc.
 }
 
+void os::setup_fpu() {
+  // Nothing needed on Sparc.
+}
+
 #ifndef PRODUCT
 void os::verify_stack_alignment() {
 }

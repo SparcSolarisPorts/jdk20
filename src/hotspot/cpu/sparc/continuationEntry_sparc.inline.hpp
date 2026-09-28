@@ -28,6 +28,7 @@
 
 #include "runtime/continuationEntry.hpp"
 
+#include "code/codeCache.inline.hpp"
 #include "runtime/frame.inline.hpp"
 #include "runtime/registerMap.hpp"
 #include "utilities/macros.hpp"

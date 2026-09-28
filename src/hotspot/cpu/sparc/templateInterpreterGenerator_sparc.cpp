@@ -991,6 +991,16 @@ address TemplateInterpreterGenerator::generate_CRC32C_updateBytes_entry(Abstract
   return NULL;
 }
 
+// Float16 is not supported on SPARC; returning NULL makes the shared
+// generator fall back to the normal (non-intrinsic) entry point.
+address TemplateInterpreterGenerator::generate_Float_float16ToFloat_entry() {
+  return NULL;
+}
+
+address TemplateInterpreterGenerator::generate_Float_floatToFloat16_entry() {
+  return NULL;
+}
+
 /* Math routines only partially supported.
  *
  *   Providing support for fma (float/double) only.

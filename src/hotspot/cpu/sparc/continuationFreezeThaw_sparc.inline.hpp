@@ -193,6 +193,15 @@ inline void ThawBase::prefetch_chunk_pd(void* start, int size) {
   if (size >= 64) Prefetch::read(start, size - 64);
 }
 
+template <typename ConfigT>
+inline void Thaw<ConfigT>::patch_caller_links(intptr_t* sp, intptr_t* bottom) {
+  // Fast path depends on !PreserveFramePointer. See can_thaw_fast().
+  // On SPARC, intra-chunk frame links are stored as self-relative deltas
+  // (see freeze_sparc_patch_link), so they stay valid after the fast-path
+  // memcpy of the frames back onto the stack.
+  assert(!PreserveFramePointer, "Frame pointers need to be fixed");
+}
+
 
 //// Thaw slow path
 

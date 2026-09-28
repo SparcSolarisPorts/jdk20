@@ -175,4 +175,10 @@ inline intptr_t* ContinuationHelper::InterpretedFrame::frame_top(
   return f.unextended_sp() + (callee_interpreted ? callee_argsize : 0);
 }
 
+inline intptr_t* ContinuationHelper::InterpretedFrame::callers_sp(const frame& f) {
+  // On SPARC the caller's SP is the callee's FP (register-window linkage);
+  // frame::metadata_words is 0 on SPARC, so this matches frame::sender_sp().
+  return f.fp() + frame::metadata_words;
+}
+
 #endif // CPU_SPARC_CONTINUATIONHELPER_SPARC_INLINE_HPP
