@@ -231,13 +231,13 @@ bool frame::safe_for_sender(JavaThread *thread) {
 
 
     // We must always be able to find a recognizable pc
-    CodeBlob* sender_blob = CodeCache::find_blob_unsafe(sender_pc);
+    CodeBlob* sender_blob = CodeCache::find_blob(sender_pc);
     if (sender_pc == NULL ||  sender_blob == NULL) {
       return false;
     }
 
-    // Could be a zombie method
-    if (sender_blob->is_zombie() || sender_blob->is_unloaded()) {
+    // Could be a zombie method. JDK 20: dead-blob check is is_not_entrant()
+    if (sender_blob->is_not_entrant()) {
       return false;
     }
 
@@ -362,7 +362,7 @@ frame::frame(intptr_t* sp, intptr_t* younger_sp, bool younger_frame_is_interpret
     _pc = (address)younger_sp[I7->sp_offset_in_saved_window()] + pc_return_offset;
     assert( (intptr_t*)younger_sp[FP->sp_offset_in_saved_window()] == (intptr_t*)((intptr_t)sp - STACK_BIAS), "younger_sp must be valid");
     // Any frame we ever build should always "safe" therefore we should not have to call
-    // find_blob_unsafe
+    // find_blob
     // In case of native stubs, the pc retrieved here might be
     // wrong.  (the _last_native_pc will have the right value)
     // So do not put add any asserts on the _pc here.
@@ -506,7 +506,7 @@ frame frame::sender_for_compiled_frame(RegisterMap *map) const {
 frame frame::sender(RegisterMap* map) const {
   assert(map != NULL, "map must be set");
 
-  assert(CodeCache::find_blob_unsafe(_pc) == _cb, "inconsistent");
+  assert(CodeCache::find_blob(_pc) == _cb, "inconsistent");
 
   // Default is not to follow arguments; update it accordingly below
   map->set_include_argument_oops(false);
