@@ -22,6 +22,8 @@
  *
  */
 
+#include "precompiled.hpp"
+
 #include "runtime/threadLocalStorage.hpp"
 #include "utilities/debug.hpp"
 #include <pthread.h>

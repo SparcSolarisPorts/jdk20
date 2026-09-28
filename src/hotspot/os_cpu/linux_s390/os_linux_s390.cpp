@@ -23,6 +23,8 @@
  *
  */
 
+#include "precompiled.hpp"
+
 // This file is organized as os_linux_x86.cpp.
 
 // no precompiled headers

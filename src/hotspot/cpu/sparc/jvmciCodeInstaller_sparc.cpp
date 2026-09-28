@@ -21,17 +21,20 @@
  * questions.
  */
 
+#include "precompiled.hpp"
+#include "jvmci/jvmci.hpp"
 #include "jvmci/jvmciCodeInstaller.hpp"
 #include "jvmci/jvmciRuntime.hpp"
 #include "jvmci/jvmciCompilerToVM.hpp"
 #include "jvmci/jvmciJavaClasses.hpp"
 #include "oops/oop.inline.hpp"
 #include "runtime/handles.inline.hpp"
+#include "runtime/jniHandles.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "utilities/align.hpp"
 #include "vmreg_sparc.inline.hpp"
 
-jint CodeInstaller::pd_next_offset(NativeInstruction* inst, jint pc_offset, JVMCIObject method, JVMCI_TRAPS) {
+jint CodeInstaller::pd_next_offset(NativeInstruction* inst, jint pc_offset, JVMCI_TRAPS) {
   if (inst->is_call() || inst->is_jump()) {
     return pc_offset + NativeCall::instruction_size;
   } else if (inst->is_call_reg()) {
@@ -44,11 +47,10 @@ jint CodeInstaller::pd_next_offset(NativeInstruction* inst, jint pc_offset, JVMC
   }
 }
 
-void CodeInstaller::pd_patch_OopConstant(int pc_offset, JVMCIObject constant, JVMCI_TRAPS) {
+void CodeInstaller::pd_patch_OopConstant(int pc_offset, Handle& obj, bool compressed, JVMCI_TRAPS) {
   address pc = _instructions->start() + pc_offset;
-  Handle obj = jvmci_env()->asConstant(constant, JVMCI_CHECK);
   jobject value = JNIHandles::make_local(obj());
-  if (jvmci_env()->get_HotSpotObjectConstantImpl_compressed(constant)) {
+  if (compressed) {
     int oop_index = _oop_recorder->find_index(value);
     RelocationHolder rspec = oop_Relocation::spec(oop_index);
     _instructions->relocate(pc, rspec, 1);
@@ -64,18 +66,18 @@ void CodeInstaller::pd_patch_OopConstant(int pc_offset, JVMCIObject constant, JV
   }
 }
 
-void CodeInstaller::pd_patch_MetaspaceConstant(int pc_offset, JVMCIObject constant, JVMCI_TRAPS) {
+void CodeInstaller::pd_patch_MetaspaceConstant(int pc_offset, HotSpotCompiledCodeStream* stream, u1 tag, JVMCI_TRAPS) {
   address pc = _instructions->start() + pc_offset;
-  if (jvmci_env()->get_HotSpotMetaspaceConstantImpl_compressed(constant)) {
+  if (tag == PATCH_NARROW_KLASS) {
     NativeMovConstReg32* move = nativeMovConstReg32_at(pc);
-    narrowKlass narrowOop = record_narrow_metadata_reference(_instructions, pc, constant, JVMCI_CHECK);
+    narrowKlass narrowOop = record_narrow_metadata_reference(_instructions, pc, stream, tag, JVMCI_CHECK);
     move->set_data((intptr_t)narrowOop);
-    TRACE_jvmci_3("relocating (narrow metaspace constant) at " PTR_FORMAT "/0x%x", p2i(pc), narrowOop);
+    JVMCI_event_3("relocating (narrow metaspace constant) at " PTR_FORMAT "/0x%x", p2i(pc), narrowOop);
   } else {
     NativeMovConstReg* move = nativeMovConstReg_at(pc);
-    void* reference = record_metadata_reference(_instructions, pc, constant, JVMCI_CHECK);
+    void* reference = record_metadata_reference(_instructions, pc, stream, tag, JVMCI_CHECK);
     move->set_data((intptr_t)reference);
-    TRACE_jvmci_3("relocating (metaspace constant) at " PTR_FORMAT "/" PTR_FORMAT, p2i(pc), p2i(reference));
+    JVMCI_event_3("relocating (metaspace constant) at " PTR_FORMAT "/" PTR_FORMAT, p2i(pc), p2i(reference));
   }
 }
 
@@ -90,14 +92,14 @@ void CodeInstaller::pd_patch_DataSectionReference(int pc_offset, int data_offset
         _instructions->relocate(pc + NativeMovConstReg::sethi_offset, internal_word_Relocation::spec((address) dest));
         _instructions->relocate(pc + NativeMovConstReg::add_offset, internal_word_Relocation::spec((address) dest));
       }
-      TRACE_jvmci_3("relocating at " PTR_FORMAT " (+%d) with destination at %d", p2i(pc), pc_offset, data_offset);
+      JVMCI_event_3("relocating at " PTR_FORMAT " (+%d) with destination at %d", p2i(pc), pc_offset, data_offset);
   }else {
     int const_size = align_up(_constants->end()-_constants->start(), CodeEntryAlignment);
     NativeMovRegMem* load = nativeMovRegMem_at(pc);
     // This offset must match with SPARCLoadConstantTableBaseOp.emitCode
     // -4096 was Assembler::min_simm13()
     load->set_offset(- (const_size - data_offset - 4096));
-    TRACE_jvmci_3("relocating ld at " PTR_FORMAT " (+%d) with destination at %d", p2i(pc), pc_offset, data_offset);
+    JVMCI_event_3("relocating ld at " PTR_FORMAT " (+%d) with destination at %d", p2i(pc), pc_offset, data_offset);
   }
 }
 
@@ -114,37 +116,30 @@ void CodeInstaller::pd_relocate_ForeignCall(NativeInstruction* inst, jlong forei
   } else {
     JVMCI_ERROR("unknown call or jump instruction at " PTR_FORMAT, p2i(pc));
   }
-  TRACE_jvmci_3("relocating (foreign call) at " PTR_FORMAT, p2i(inst));
+  JVMCI_event_3("relocating (foreign call) at " PTR_FORMAT, p2i(inst));
 }
 
-void CodeInstaller::pd_relocate_JavaMethod(CodeBuffer &, JVMCIObject hotspot_method, jint pc_offset, JVMCI_TRAPS) {
-#ifdef ASSERT
-  Method* method = NULL;
-  // we need to check, this might also be an unresolved method
-  if (JVMCIENV->isa_HotSpotResolvedJavaMethodImpl(hotspot_method)) {
-    method = JVMCIENV->asMethod(hotspot_method);
-  }
-#endif
+void CodeInstaller::pd_relocate_JavaMethod(CodeBuffer &, methodHandle& method, jint pc_offset, JVMCI_TRAPS) {
   switch (_next_call_type) {
     case INLINE_INVOKE:
       break;
     case INVOKEVIRTUAL:
     case INVOKEINTERFACE: {
-      assert(method == NULL || !method->is_static(), "cannot call static method with invokeinterface");
+      assert(!method->is_static(), "cannot call static method with invokeinterface");
       NativeCall* call = nativeCall_at(_instructions->start() + pc_offset);
       call->set_destination(SharedRuntime::get_resolve_virtual_call_stub());
       _instructions->relocate(call->instruction_address(), virtual_call_Relocation::spec(_invoke_mark_pc));
       break;
     }
     case INVOKESTATIC: {
-      assert(method == NULL || method->is_static(), "cannot call non-static method with invokestatic");
+      assert(method->is_static(), "cannot call non-static method with invokestatic");
       NativeCall* call = nativeCall_at(_instructions->start() + pc_offset);
       call->set_destination(SharedRuntime::get_resolve_static_call_stub());
       _instructions->relocate(call->instruction_address(), relocInfo::static_call_type);
       break;
     }
     case INVOKESPECIAL: {
-      assert(method == NULL || !method->is_static(), "cannot call static method with invokespecial");
+      assert(!method->is_static(), "cannot call static method with invokespecial");
       NativeCall* call = nativeCall_at(_instructions->start() + pc_offset);
       call->set_destination(SharedRuntime::get_resolve_opt_virtual_call_stub());
       _instructions->relocate(call->instruction_address(), relocInfo::opt_virtual_call_type);

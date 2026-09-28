@@ -22,6 +22,8 @@
  *
  */
 
+#include "precompiled.hpp"
+
 #include "classfile/classLoader.hpp"
 #include "jvm.h"
 #include "jvmtifiles/jvmti.h"

@@ -23,6 +23,8 @@
  *
  */
 
+#include "precompiled.hpp"
+
 // no precompiled headers
 #include "classfile/vmSymbols.hpp"
 #include "code/icBuffer.hpp"

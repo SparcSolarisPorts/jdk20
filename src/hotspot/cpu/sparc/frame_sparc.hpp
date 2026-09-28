@@ -25,7 +25,9 @@
 #ifndef CPU_SPARC_FRAME_SPARC_HPP
 #define CPU_SPARC_FRAME_SPARC_HPP
 
-#include "runtime/synchronizer.hpp"
+// Note: this file is included from within class frame (runtime/frame.hpp),
+// so it must not contain any #include directives.  BasicObjectLock, used
+// below, is provided by runtime/basicLock.hpp via runtime/frame.hpp.
 
 // A frame represents a physical stack frame (an activation).  Frames can be
 // C or Java frames, and the Java frames can be interpreted or compiled.

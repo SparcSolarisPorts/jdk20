@@ -69,7 +69,7 @@ void InterpreterMacroAssembler::compute_extra_locals_size_in_bytes(Register args
   br(Assembler::negative, true, Assembler::pt, skip_move);
   delayed()->mov(G0, delta);
   bind(skip_move);
-  align_up(delta, WordsPerLong);       // make multiple of 2 (SP must be 2-word aligned)
+  round_to(delta, WordsPerLong);       // make multiple of 2 (SP must be 2-word aligned)
   sll(delta, LogBytesPerWord, delta);  // extra space for locals in bytes
 }
 

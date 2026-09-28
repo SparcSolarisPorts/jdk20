@@ -2474,7 +2474,7 @@ void SharedRuntime::generate_deopt_blob() {
 
     // Save everything in sight.
     (void) RegisterSaver::save_live_registers(masm, 0, &frame_size_words);
-    __ set_last_Java_frame(SP, NULL);
+    __ set_last_Java_frame(SP, noreg);
 
     __ ld(G2_thread, in_bytes(JavaThread::pending_deoptimization_offset()), O1);
     __ sub(G0, 1, L1);

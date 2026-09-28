@@ -452,7 +452,7 @@ void ArrayCopyStub::emit_code(LIR_Assembler* ce) {
   __ set((intptr_t)&Runtime1::_arraycopy_slowcase_cnt, O0);
   __ ld(O0, 0, O1);
   __ inc(O1);
-  __ st(O1, 0, O0);
+  __ st(O1, G0, O0);
 #endif
 
   __ br(Assembler::always, false, Assembler::pt, _continuation);

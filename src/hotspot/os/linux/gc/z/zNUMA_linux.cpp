@@ -21,6 +21,8 @@
  * questions.
  */
 
+#include "precompiled.hpp"
+
 #include "gc/z/zCPU.inline.hpp"
 #include "gc/z/zErrno.hpp"
 #include "gc/z/zNUMA.hpp"

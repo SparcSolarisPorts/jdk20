@@ -22,6 +22,8 @@
  *
  */
 
+#include "precompiled.hpp"
+
 #include "jvm.h"
 #include "runtime/os.hpp"
 #include "utilities/decoder_elf.hpp"

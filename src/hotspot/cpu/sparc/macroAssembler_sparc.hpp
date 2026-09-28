@@ -397,7 +397,7 @@ class ExternalAddress: public AddressLiteral {
   ExternalAddress(Metadata** target) : AddressLiteral(target, reloc_for_target((address) target)) {}
 };
 
-inline Address RegisterImpl::address_in_saved_window() const {
+inline Address Register::address_in_saved_window() const {
    return (Address(SP, (sp_offset_in_saved_window() * wordSize) + STACK_BIAS));
 }
 

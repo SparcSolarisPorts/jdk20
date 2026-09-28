@@ -24,6 +24,8 @@
  *
  */
 
+#include "precompiled.hpp"
+
 
 // Implementation of LoadedLibraries and friends
 

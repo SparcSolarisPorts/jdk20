@@ -22,6 +22,8 @@
  *
  */
 
+#include "precompiled.hpp"
+
 // no precompiled headers
 #include "asm/assembler.inline.hpp"
 #include "classfile/vmSymbols.hpp"

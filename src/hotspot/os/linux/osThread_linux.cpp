@@ -22,6 +22,8 @@
  *
  */
 
+#include "precompiled.hpp"
+
 // no precompiled headers
 #include "memory/allocation.inline.hpp"
 #include "runtime/mutex.hpp"

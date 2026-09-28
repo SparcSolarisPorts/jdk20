@@ -9,8 +9,7 @@
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
+ * version 2 for more details.
  *
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
@@ -28,15 +27,13 @@
 #include <cstdint>
 
 #include "asm/register.hpp"
-#include "code/vmreg.inline.hpp"
 
-// Foreign Function & Memory API is not supported on SPARC. This mapping only
-// exists so that shared code referencing VMStorage keeps compiling.
+// The Foreign Function & Memory API is not supported on SPARC.  This mapping
+// only exists so that shared code referencing VMStorage keeps compiling
+// (mirrors the other unsupported ports, e.g. ppc).
 enum class StorageType : int8_t {
-  INTEGER = 0,
-  FLOAT = 1,
-  STACK = 2,
-  PLACEHOLDER = 3,
+  STACK = 0,
+  PLACEHOLDER = 1,
 // special locations used only by native code
   FRAME_DATA = PLACEHOLDER + 1,
   INVALID = -1
@@ -44,55 +41,13 @@ enum class StorageType : int8_t {
 
 // need to define this before constructing VMStorage (below)
 constexpr inline bool VMStorage::is_reg(StorageType type) {
-   return type == StorageType::INTEGER || type == StorageType::FLOAT;
+   return false;
 }
 constexpr inline StorageType VMStorage::stack_type() { return StorageType::STACK; }
 constexpr inline StorageType VMStorage::placeholder_type() { return StorageType::PLACEHOLDER; }
 constexpr inline StorageType VMStorage::frame_data_type() { return StorageType::FRAME_DATA; }
 
-constexpr uint16_t REG_MASK = 0b0000000000001111;
-
-inline Register as_Register(VMStorage vms) {
-  assert(vms.type() == StorageType::INTEGER, "not the right type");
-  return ::as_Register(vms.index());
-}
-
-inline FloatRegister as_FloatRegister(VMStorage vms) {
-  assert(vms.type() == StorageType::FLOAT, "not the right type");
-  return ::as_FloatRegister(vms.index());
-}
-
-inline VMReg as_VMReg(VMStorage vms) {
-  switch (vms.type()) {
-    case StorageType::INTEGER: return as_Register(vms)->as_VMReg();
-    case StorageType::FLOAT:   return as_FloatRegister(vms)->as_VMReg();
-    case StorageType::STACK: {
-      assert((vms.index() % VMRegImpl::stack_slot_size) == 0, "can not represent as VMReg");
-      return VMRegImpl::stack2reg(vms.index() / VMRegImpl::stack_slot_size);
-    }
-    default: ShouldNotReachHere(); return VMRegImpl::Bad();
-  }
-}
-
-constexpr inline VMStorage as_VMStorage(Register reg) {
-  return VMStorage::reg_storage(StorageType::INTEGER, REG_MASK, reg->encoding());
-}
-
-constexpr inline VMStorage as_VMStorage(FloatRegister reg) {
-  return VMStorage::reg_storage(StorageType::FLOAT, REG_MASK, reg->encoding(FloatRegisterImpl::S));
-}
-
 inline VMStorage as_VMStorage(VMReg reg) {
-  if (reg->is_Register()) {
-    return as_VMStorage(reg->as_Register());
-  } else if (reg->is_stack()) {
-    return VMStorage::stack_storage(reg);
-  } else if (!reg->is_valid()) {
-    return VMStorage::invalid();
-  }
-  // No VMReg float accessors exist for SPARC in JDK20 (the SPARC branch of
-  // vmreg.hpp was removed with the port). FFM is unsupported on SPARC, so
-  // this path is unreachable.
   ShouldNotReachHere();
   return VMStorage::invalid();
 }

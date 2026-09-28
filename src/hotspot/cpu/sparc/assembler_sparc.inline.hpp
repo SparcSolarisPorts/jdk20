@@ -1124,7 +1124,7 @@ inline void Assembler::crc32c(FloatRegister s1, FloatRegister s2, FloatRegister 
 
 inline void Assembler::mpmul(int uimm5) {
   mpmul_only();
-  emit_int32(op(arith_op) | rd(0) | op3(mpmul_op3) | rs1(0) | opf(mpmul_opf) | uimm(uimm5, 5));
+  emit_int32(op(arith_op) | rd(G0) | op3(mpmul_op3) | rs1(G0) | opf(mpmul_opf) | uimm(uimm5, 5));
 }
 
 #endif // CPU_SPARC_ASSEMBLER_SPARC_INLINE_HPP

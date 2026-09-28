@@ -22,6 +22,8 @@
  *
  */
 
+#include "precompiled.hpp"
+
 #include <string.h>
 #include <math.h>
 #include <errno.h>

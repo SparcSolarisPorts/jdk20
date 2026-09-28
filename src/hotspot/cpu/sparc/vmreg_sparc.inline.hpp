@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2006, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -9,8 +9,7 @@
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
+ * version 2 for more details.
  *
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
@@ -25,12 +24,12 @@
 #ifndef CPU_SPARC_VMREG_SPARC_INLINE_HPP
 #define CPU_SPARC_VMREG_SPARC_INLINE_HPP
 
-inline VMReg RegisterImpl::as_VMReg() {
-  if( this==noreg ) return VMRegImpl::Bad();
+inline VMReg Register::as_VMReg() const {
+  if( *this == noreg ) return VMRegImpl::Bad();
   return VMRegImpl::as_VMReg(encoding() << 1 );
 }
 
-inline VMReg FloatRegisterImpl::as_VMReg() { return VMRegImpl::as_VMReg( ConcreteRegisterImpl::max_gpr + encoding() ); }
+inline VMReg FloatRegister::as_VMReg() const { return VMRegImpl::as_VMReg( ConcreteRegisterImpl::max_gpr + encoding() ); }
 
 
 

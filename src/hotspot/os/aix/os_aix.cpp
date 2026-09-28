@@ -23,6 +23,8 @@
  *
  */
 
+#include "precompiled.hpp"
+
 // According to the AIX OS doc #pragma alloca must be used
 // with C++ compiler before referencing the function alloca()
 #pragma alloca

@@ -6006,9 +6006,9 @@ instruct storeN0(memory dst, immN0 src) %{
      Register base = as_Register($dst$$base);
      Register index = as_Register($dst$$index);
      if (index != G0) {
-       __ stw(0, base, index);
+       __ stw(G0, base, index);
      } else {
-       __ stw(0, base, $dst$$disp);
+       __ stw(G0, base, $dst$$disp);
      }
    %}
    ins_pipe(istore_mem_zero);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -9,8 +9,7 @@
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
+ * version 2 for more details.
  *
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
@@ -25,10 +24,10 @@
 #include "precompiled.hpp"
 #include "register_sparc.hpp"
 
-const int ConcreteRegisterImpl::max_gpr = RegisterImpl::number_of_registers << 1;
-const int ConcreteRegisterImpl::max_fpr =  ConcreteRegisterImpl::max_gpr + FloatRegisterImpl::number_of_registers;
+const int ConcreteRegisterImpl::max_gpr = Register::number_of_registers << 1;
+const int ConcreteRegisterImpl::max_fpr =  ConcreteRegisterImpl::max_gpr + FloatRegister::number_of_registers;
 
-const char* RegisterImpl::name() const {
+const char* Register::name() const {
   const char* names[number_of_registers] = {
     "G0", "G1", "G2", "G3", "G4", "G5", "G6", "G7",
     "O0", "O1", "O2", "O3", "O4", "O5", "SP", "O7",
@@ -39,7 +38,7 @@ const char* RegisterImpl::name() const {
 }
 
 
-const char* FloatRegisterImpl::name() const {
+const char* FloatRegister::name() const {
   const char* names[number_of_registers] = {
     "F0",  "F1",   "F2",  "F3",   "F4",  "F5",   "F6",  "F7",   "F8",  "F9",
     "F10", "F11",  "F12", "F13",  "F14", "F15",  "F16", "F17",  "F18", "F19",

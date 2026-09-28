@@ -22,6 +22,8 @@
  *
  */
 
+#include "precompiled.hpp"
+
 #include "misc_aix.hpp"
 #include "runtime/stubRoutines.hpp"
 #include "utilities/align.hpp"

@@ -23,6 +23,8 @@
  *
  */
 
+#include "precompiled.hpp"
+
 #include <pthread.h> /* For pthread_attr_get_np */
 
 // no precompiled headers

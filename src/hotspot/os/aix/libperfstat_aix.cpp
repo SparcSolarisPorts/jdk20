@@ -24,6 +24,8 @@
  *
  */
 
+#include "precompiled.hpp"
+
 #include "libperfstat_aix.hpp"
 #include "misc_aix.hpp"
 

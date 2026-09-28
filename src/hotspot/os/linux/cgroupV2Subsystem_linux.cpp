@@ -22,6 +22,8 @@
  *
  */
 
+#include "precompiled.hpp"
+
 #include "cgroupV2Subsystem_linux.hpp"
 
 /* cpu_shares

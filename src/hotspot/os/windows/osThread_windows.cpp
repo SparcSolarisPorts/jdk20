@@ -22,6 +22,8 @@
  *
  */
 
+#include "precompiled.hpp"
+
 // no precompiled headers
 #include "runtime/os.hpp"
 #include "runtime/osThread.hpp"

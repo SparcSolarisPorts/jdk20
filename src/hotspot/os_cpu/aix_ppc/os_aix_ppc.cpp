@@ -23,6 +23,8 @@
  *
  */
 
+#include "precompiled.hpp"
+
 // no precompiled headers
 #include "assembler_ppc.hpp"
 #include "asm/assembler.inline.hpp"

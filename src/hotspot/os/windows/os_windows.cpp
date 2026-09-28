@@ -22,6 +22,8 @@
  *
  */
 
+#include "precompiled.hpp"
+
 // API level must be at least Windows Vista or Server 2008 to use InitOnceExecuteOnce
 
 // no precompiled headers

@@ -22,6 +22,8 @@
  *
  */
 
+#include "precompiled.hpp"
+
 // no precompiled headers
 #include "runtime/handles.inline.hpp"
 #include "runtime/mutexLocker.hpp"

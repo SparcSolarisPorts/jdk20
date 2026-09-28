@@ -23,6 +23,8 @@
  *
  */
 
+#include "precompiled.hpp"
+
 #include "libodm_aix.hpp"
 #include "misc_aix.hpp"
 #include <stdlib.h>

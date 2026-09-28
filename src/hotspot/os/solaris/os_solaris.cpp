@@ -22,6 +22,8 @@
  *
  */
 
+#include "precompiled.hpp"
+
 // no precompiled headers
 #include "jvm.h"
 #include "classfile/classLoader.hpp"

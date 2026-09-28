@@ -22,6 +22,8 @@
  *
  */
 
+#include "precompiled.hpp"
+
 #include "asm/assembler.hpp"
 #include "compiler/disassembler.hpp"
 #include "loadlib_aix.hpp"

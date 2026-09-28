@@ -1894,7 +1894,7 @@ void TemplateInterpreterGenerator::histogram_bytecode_pair(Template* t) {
   __ add (G3_scratch, G4_scratch, G3_scratch);        // Add in index
   __ ld (G3_scratch, 0, G4_scratch);
   __ inc (G4_scratch);
-  __ st (G4_scratch, 0, G3_scratch);
+  __ st (G4_scratch, G0, G3_scratch);
 }
 
 
