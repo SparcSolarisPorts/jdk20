@@ -2938,7 +2938,7 @@ void MacroAssembler::store_klass_gap(Register s, Register d) {
 void MacroAssembler::access_store_at(BasicType type, DecoratorSet decorators,
                                      Register src, Address dst, Register tmp) {
   BarrierSetAssembler* bs = BarrierSet::barrier_set()->barrier_set_assembler();
-  decorators = AccessInternal::decorator_fixup(decorators);
+  decorators = AccessInternal::decorator_fixup(decorators, type);
   bool as_raw = (decorators & AS_RAW) != 0;
   if (as_raw) {
     bs->BarrierSetAssembler::store_at(this, decorators, type, src, dst, tmp);
@@ -2950,7 +2950,7 @@ void MacroAssembler::access_store_at(BasicType type, DecoratorSet decorators,
 void MacroAssembler::access_load_at(BasicType type, DecoratorSet decorators,
                                     Address src, Register dst, Register tmp) {
   BarrierSetAssembler* bs = BarrierSet::barrier_set()->barrier_set_assembler();
-  decorators = AccessInternal::decorator_fixup(decorators);
+  decorators = AccessInternal::decorator_fixup(decorators, type);
   bool as_raw = (decorators & AS_RAW) != 0;
   if (as_raw) {
     bs->BarrierSetAssembler::load_at(this, decorators, type, src, dst, tmp);
