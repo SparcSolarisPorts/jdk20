@@ -28,6 +28,12 @@
 // C2_MacroAssembler contains high-level macros for C2
 
  public:
+  // JDK 20 C2_MacroAssembler interface: nmethod entry barrier stubs.
+  // Never used on SPARC (the C2EntryBarrierStubTable is never populated),
+  // but required for compilation.
+  void emit_entry_barrier_stub(C2EntryBarrierStub* stub);
+  static int entry_barrier_stub_size();
+
   // Compress char[] to byte[] by compressing 16 bytes at once. Return 0 on failure.
   void string_compress_16(Register src, Register dst, Register cnt, Register result,
                           Register tmp1, Register tmp2, Register tmp3, Register tmp4,

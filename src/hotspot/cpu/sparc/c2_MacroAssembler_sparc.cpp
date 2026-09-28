@@ -425,3 +425,15 @@ void C2_MacroAssembler::array_equals(bool is_array_equ, Register ary1, Register 
   bind(Ldone);
 }
 
+
+// Nmethod entry barrier stubs are not used on SPARC: sparc.ad has no
+// entry-barrier instruct and nothing calls C2EntryBarrierStubTable::
+// add_entry_barrier(), so the table is always empty. These definitions exist
+// only to satisfy the JDK 20 C2_MacroAssembler interface and are never executed.
+int C2_MacroAssembler::entry_barrier_stub_size() {
+  return 0;
+}
+
+void C2_MacroAssembler::emit_entry_barrier_stub(C2EntryBarrierStub* stub) {
+  ShouldNotCallThis();
+}
