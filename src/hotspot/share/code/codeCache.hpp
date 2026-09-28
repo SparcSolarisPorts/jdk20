@@ -34,6 +34,7 @@
 #include "oops/oopsHierarchy.hpp"
 #include "runtime/mutexLocker.hpp"
 #include "utilities/numberSeq.hpp"
+#include "utilities/resizeableResourceHash.hpp"
 
 // The CodeCache implements the code cache for various pieces of generated
 // code, e.g., compiled java methods, runtime stubs, transition frames, etc.
