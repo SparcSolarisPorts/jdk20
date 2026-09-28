@@ -281,8 +281,7 @@ static VMRegPair reg64_to_VMRegPair(Register r) {
 // interrupt).
 int SharedRuntime::java_calling_convention(const BasicType *sig_bt,
                                            VMRegPair *regs,
-                                           int total_args_passed,
-                                           int is_outgoing) {
+                                           int total_args_passed) {
   assert(F31->as_VMReg()->is_reg(), "overlapping stack/register numbers");
 
   const int int_reg_max = SPARC_ARGS_IN_REGS_NUM;
@@ -300,7 +299,7 @@ int SharedRuntime::java_calling_convention(const BasicType *sig_bt,
     case T_BYTE:
     case T_BOOLEAN:
       if (int_reg < int_reg_max) {
-        Register r = is_outgoing ? as_oRegister(int_reg++) : as_iRegister(int_reg++);
+        Register r = as_iRegister(int_reg++);
         regs[i].set1(r->as_VMReg());
       } else {
         regs[i].set1(VMRegImpl::stack2reg(slot++));
@@ -314,7 +313,7 @@ int SharedRuntime::java_calling_convention(const BasicType *sig_bt,
     case T_ARRAY:
     case T_ADDRESS: // Used, e.g., in slow-path locking for the lock's stack address
       if (int_reg < int_reg_max) {
-        Register r = is_outgoing ? as_oRegister(int_reg++) : as_iRegister(int_reg++);
+        Register r = as_iRegister(int_reg++);
         regs[i].set2(r->as_VMReg());
       } else {
         slot = align_up(slot, 2);  // align

@@ -36,7 +36,10 @@
 
   address pd_location(VMReg reg) const;
   address pd_location(VMReg base_reg, int slot_idx) const {
-    return trusted_location(base_reg->next(slot_idx));
+    // JDK 20 removed RegisterMap::trusted_location(); the window-based
+    // pd_location(reg) below computes exactly what trusted_location did
+    // (the share-side caller checks _location_valid before delegating here).
+    return pd_location(base_reg->next(slot_idx));
   }
   void pd_clear();
   void pd_initialize_from(const RegisterMap* map) {

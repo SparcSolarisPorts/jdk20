@@ -35,6 +35,7 @@
 // ResourceHashtable/ResizeableResourceHashtable/PaddedEnd/TruncatedSeq without
 // including their defining headers directly; this toolchain does not pull
 // them in transitively before first use, so provide them up front.
+#include "runtime/synchronizer.hpp"
 #include "utilities/resourceHash.hpp"
 #include "utilities/resizeableResourceHash.hpp"
 #include "memory/padded.hpp"

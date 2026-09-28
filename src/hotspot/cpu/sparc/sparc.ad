@@ -2846,7 +2846,7 @@ frame %{
   // arguments either in registers or in stack slots for calling
   // java
   calling_convention %{
-    (void) SharedRuntime::java_calling_convention(sig_bt, regs, length, is_outgoing);
+    (void) SharedRuntime::java_calling_convention(sig_bt, regs, length);
 
   %}
 
@@ -2869,8 +2869,8 @@ frame %{
     static int hi_out[Op_RegL+1] = { OptoReg::Bad, OptoReg::Bad, OptoReg::Bad, OptoReg::Bad, R_O0H_num,    OptoReg::Bad, R_F1_num, R_O0H_num};
     static int lo_in [Op_RegL+1] = { OptoReg::Bad, OptoReg::Bad, R_I0_num,     R_I0_num,     R_I0_num,     R_F0_num,     R_F0_num, R_I0_num };
     static int hi_in [Op_RegL+1] = { OptoReg::Bad, OptoReg::Bad, OptoReg::Bad, OptoReg::Bad, R_I0H_num,    OptoReg::Bad, R_F1_num, R_I0H_num};
-    return OptoRegPair( (is_outgoing?hi_out:hi_in)[ideal_reg],
-                        (is_outgoing?lo_out:lo_in)[ideal_reg] );
+    return OptoRegPair( hi_in[ideal_reg],
+                        lo_in[ideal_reg] );
   %}
 
   // Location of compiled Java return values.  Same as C
@@ -2880,8 +2880,8 @@ frame %{
     static int hi_out[Op_RegL+1] = { OptoReg::Bad, OptoReg::Bad, OptoReg::Bad, OptoReg::Bad, R_O0H_num,    OptoReg::Bad, R_F1_num, R_O0H_num};
     static int lo_in [Op_RegL+1] = { OptoReg::Bad, OptoReg::Bad, R_I0_num,     R_I0_num,     R_I0_num,     R_F0_num,     R_F0_num, R_I0_num };
     static int hi_in [Op_RegL+1] = { OptoReg::Bad, OptoReg::Bad, OptoReg::Bad, OptoReg::Bad, R_I0H_num,    OptoReg::Bad, R_F1_num, R_I0H_num};
-    return OptoRegPair( (is_outgoing?hi_out:hi_in)[ideal_reg],
-                        (is_outgoing?lo_out:lo_in)[ideal_reg] );
+    return OptoRegPair( hi_in[ideal_reg],
+                        lo_in[ideal_reg] );
   %}
 
 %}
