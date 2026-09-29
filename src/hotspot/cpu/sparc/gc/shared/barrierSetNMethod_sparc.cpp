@@ -27,14 +27,24 @@
 #include "utilities/debug.hpp"
 
 void BarrierSetNMethod::deoptimize(nmethod* nm, address* return_address_ptr) {
+  // No SPARC nmethod entry barrier is emitted, so the slow path that would
+  // request deoptimization must never be reached.
   ShouldNotReachHere();
 }
 
 void BarrierSetNMethod::disarm(nmethod* nm) {
-  ShouldNotReachHere();
+  // SPARC has no generated guard to patch. supports_entry_barrier() returns
+  // false for this port, making the code-cache unloading paths conservative.
+  assert(!supports_entry_barrier(nm), "SPARC does not support nmethod entry barriers");
+}
+
+void BarrierSetNMethod::arm(nmethod* nm, int arm_value) {
+  // No generated guard exists to arm on SPARC.
+  assert(!supports_entry_barrier(nm), "SPARC does not support nmethod entry barriers");
 }
 
 bool BarrierSetNMethod::is_armed(nmethod* nm) {
-  ShouldNotReachHere();
+  // With no generated guard, an nmethod can never be armed on SPARC.
+  assert(!supports_entry_barrier(nm), "SPARC does not support nmethod entry barriers");
   return false;
 }

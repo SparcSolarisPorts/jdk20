@@ -45,6 +45,12 @@ int BarrierSetNMethod::disarmed_value() const {
 }
 
 bool BarrierSetNMethod::supports_entry_barrier(nmethod* nm) {
+#ifdef SPARC
+  // The SPARC port does not emit an nmethod entry barrier. Report that
+  // explicitly so code-cache unloading uses the conservative fallback.
+  return false;
+#endif
+
   if (nm->method()->is_method_handle_intrinsic()) {
     return false;
   }
