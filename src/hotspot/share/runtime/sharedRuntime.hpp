@@ -363,9 +363,11 @@ class SharedRuntime: AllStatic {
   // registers, those above refer to 4-byte stack slots.  All stack slots are
   // based off of the window top.  SharedInfo::stack0 refers to the first usable
   // slot in the bottom of the frame. SharedInfo::stack0+1 refers to the memory word
-  // 4-bytes higher.
+  // 4-bytes higher. So for sparc because the register window save area is at
+  // the bottom of the frame the first 16 words will be skipped and SharedInfo::stack0
+  // will be just above it. (
   // return value is the maximum number of VMReg stack slots the convention will use.
-  static int java_calling_convention(const BasicType* sig_bt, VMRegPair* regs, int total_args_passed);
+  static int java_calling_convention(const BasicType* sig_bt, VMRegPair* regs, int total_args_passed, int is_outgoing);
 
   static void check_member_name_argument_is_last_argument(const methodHandle& method,
                                                           const BasicType* sig_bt,

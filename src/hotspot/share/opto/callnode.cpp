@@ -68,7 +68,7 @@ Node *StartNode::Ideal(PhaseGVN *phase, bool can_reshape){
 
 //------------------------------calling_convention-----------------------------
 void StartNode::calling_convention(BasicType* sig_bt, VMRegPair *parm_regs, uint argcnt) const {
-  SharedRuntime::java_calling_convention(sig_bt, parm_regs, argcnt);
+  SharedRuntime::java_calling_convention(sig_bt, parm_regs, argcnt, false);
 }
 
 //------------------------------Registers--------------------------------------
@@ -725,7 +725,7 @@ const Type* CallNode::Value(PhaseGVN* phase) const {
 //------------------------------calling_convention-----------------------------
 void CallNode::calling_convention(BasicType* sig_bt, VMRegPair *parm_regs, uint argcnt) const {
   // Use the standard compiler calling convention
-  SharedRuntime::java_calling_convention(sig_bt, parm_regs, argcnt);
+  SharedRuntime::java_calling_convention(sig_bt, parm_regs, argcnt, true);
 }
 
 
@@ -749,8 +749,8 @@ Node *CallNode::match( const ProjNode *proj, const Matcher *match ) {
     OptoRegPair regs = Opcode() == Op_CallLeafVector
       ? match->vector_return_value(ideal_reg)      // Calls into assembly vector routine
       : is_CallRuntime()
-        ? match->c_return_value(ideal_reg)  // Calls into C runtime
-        : match->  return_value(ideal_reg); // Calls into compiled Java code
+        ? match->c_return_value(ideal_reg, true)  // Calls into C runtime
+        : match->return_value(ideal_reg, true); // Calls into compiled Java code
     RegMask rm = RegMask(regs.first());
 
     if (Opcode() == Op_CallLeafVector) {

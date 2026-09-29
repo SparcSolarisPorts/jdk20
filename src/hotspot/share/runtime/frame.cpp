@@ -1433,7 +1433,7 @@ void frame::describe(FrameValues& values, int frame_no, const RegisterMap* reg_m
         }
         assert(sig_index == sizeargs, "");
       }
-      int stack_arg_slots = SharedRuntime::java_calling_convention(sig_bt, regs, sizeargs);
+      int stack_arg_slots = SharedRuntime::java_calling_convention(sig_bt, regs, sizeargs, false);
       assert(stack_arg_slots ==  m->num_stack_arg_slots(), "");
       int out_preserve = SharedRuntime::out_preserve_stack_slots();
       int sig_index = 0;

@@ -387,14 +387,14 @@ public:
 
   // Convert a sig into a calling convention register layout
   // and find interesting things about it.
-  static OptoReg::Name  find_receiver();
+  static OptoReg::Name  find_receiver( bool is_outgoing );
   // Return address register.  On Intel it is a stack-slot.  On PowerPC
   // it is the Link register.  On Sparc it is r31?
   virtual OptoReg::Name return_addr() const;
   RegMask              _return_addr_mask;
   // Return value register.  On Intel it is EAX.
-  static OptoRegPair   return_value(uint ideal_reg);
-  static OptoRegPair c_return_value(uint ideal_reg);
+  static OptoRegPair   return_value(uint ideal_reg, bool is_outgoing);
+  static OptoRegPair c_return_value(uint ideal_reg, bool is_outgoing);
   RegMask                     _return_value_mask;
   // Inline Cache Register
   static OptoReg::Name  inline_cache_reg();

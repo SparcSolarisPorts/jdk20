@@ -4221,11 +4221,11 @@ void ArchDesc::buildFrameMethods(FILE *fp_cpp) {
   fprintf(fp_cpp,"uint Compile::varargs_C_out_slots_killed() const ");
   fprintf(fp_cpp,"{ return %s; }\n\n", _frame->_varargs_C_out_slots_killed);
   // Java Return Value Location
-  fprintf(fp_cpp,"OptoRegPair Matcher::return_value(uint ideal_reg) {\n");
+  fprintf(fp_cpp,"OptoRegPair Matcher::return_value(uint ideal_reg, bool is_outgoing) {\n");
   fprintf(fp_cpp,"%s\n", _frame->_return_value);
   fprintf(fp_cpp,"}\n\n");
   // Native Return Value Location
-  fprintf(fp_cpp,"OptoRegPair Matcher::c_return_value(uint ideal_reg) {\n");
+  fprintf(fp_cpp,"OptoRegPair Matcher::c_return_value(uint ideal_reg, bool is_outgoing) {\n");
   fprintf(fp_cpp,"%s\n", _frame->_c_return_value);
   fprintf(fp_cpp,"}\n\n");
 

@@ -136,7 +136,7 @@ static int compute_num_stack_arg_slots(Symbol* signature, int sizeargs, bool is_
   }
   assert(sig_index == sizeargs, "sig_index: %d sizeargs: %d", sig_index, sizeargs);
 
-  return SharedRuntime::java_calling_convention(sig_bt, regs, sizeargs);
+  return SharedRuntime::java_calling_convention(sig_bt, regs, sizeargs, false);
 }
 #endif
 
