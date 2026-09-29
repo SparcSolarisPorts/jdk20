@@ -5664,10 +5664,25 @@ instruct loadConP_set(iRegP dst, immP_set con) %{
 instruct loadConP_load(iRegP dst, immP_load con) %{
   match(Set dst con);
   ins_cost(MEMORY_REF_COST);
-  format %{ "LD     [$constanttablebase + $constantoffset],$dst\t! load from constant table: ptr=$con" %}
+  format %{ "SET    $con,$dst\t! ptr (inline, not from constant table)" %}
   ins_encode %{
-    RegisterOrConstant con_offset = __ ensure_simm13_or_reg($constantoffset($con), $dst$$Register);
-    __ ld_ptr($constanttablebase, con_offset, $dst$$Register);
+    // JDK20/Solaris-SPARC port note: loading pointer constants from the
+    // constant table with LDX requires an 8-byte aligned entry and a
+    // correct bound offset.  This port has shown mis-bound constant
+    // offsets (emitting e.g. ldx [ctbase+4] and trapping with SIGBUS
+    // BUS_ADRALN), so materialize the pointer inline instead.  The
+    // constant is still registered in the table by eval_constant(),
+    // keeping oop/metadata recording (and thus relocations) intact.
+    relocInfo::relocType constant_reloc = _opnds[1]->constant_reloc();
+    intptr_t val = $con$$constant;
+    if (constant_reloc == relocInfo::oop_type) {
+      __ set_oop_constant((jobject) val, $dst$$Register);
+    } else if (constant_reloc == relocInfo::metadata_type) {
+      __ set_metadata_constant((Metadata*)val, $dst$$Register);
+    } else {          // non-oop pointers, e.g. card mark base, heap top
+      assert(constant_reloc == relocInfo::none, "unexpected reloc type");
+      __ set(val, $dst$$Register);
+    }
   %}
   ins_pipe(loadConP);
 %}
@@ -5742,14 +5757,17 @@ instruct loadConL_set64(iRegL dst, immL_cheap con, o7RegL tmp) %{
   ins_pipe(loadConL);
 %}
 
-// Load long value from constant table (predicated by immL_expensive).
-instruct loadConL_ldx(iRegL dst, immL_expensive con) %{
+// Materialize long value inline (predicated by immL_expensive).
+// See loadConP_load above: constant-table loads of 8-byte values are
+// unsafe on this port because mis-bound table offsets emit misaligned
+// ldx instructions that trap with SIGBUS BUS_ADRALN on SPARC.
+instruct loadConL_ldx(iRegL dst, immL_expensive con, o7RegL tmp) %{
   match(Set dst con);
+  effect(KILL tmp);
   ins_cost(MEMORY_REF_COST);
-  format %{ "LDX     [$constanttablebase + $constantoffset],$dst\t! load from constant table: long=$con" %}
+  format %{ "SET64   $con,$dst KILL $tmp\t! expensive long (inline, not from constant table)" %}
   ins_encode %{
-      RegisterOrConstant con_offset = __ ensure_simm13_or_reg($constantoffset($con), $dst$$Register);
-    __ ldx($constanttablebase, con_offset, $dst$$Register);
+    __ set64($con$$constant, $dst$$Register, $tmp$$Register);
   %}
   ins_pipe(loadConL);
 %}
